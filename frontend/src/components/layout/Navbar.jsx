@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
+import UserAvatar from '../ui/UserAvatar';
 import {
   BookOpen,
   LayoutDashboard,
@@ -21,6 +22,7 @@ import {
 
 const Navbar = ({ onMenuToggle, sidebarOpen }) => {
   const { user } = useSelector((s) => s.auth);
+  const { profile } = useSelector((s) => s.profile);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,6 +63,8 @@ const Navbar = ({ onMenuToggle, sidebarOpen }) => {
         { to: '/dashboard/application', icon: FileText, label: 'Application' },
         { to: '/dashboard/status', icon: Bell, label: 'Status' },
       ];
+
+  const avatarSrc = user?.profilePhoto || profile?.profilePhoto;
 
   return (
     <>
@@ -147,9 +151,7 @@ const Navbar = ({ onMenuToggle, sidebarOpen }) => {
                     aria-expanded={profileOpen}
                     aria-haspopup="true"
                   >
-                    <div className="h-7 w-7 rounded-full bg-primary-100 flex items-center justify-center text-primary font-semibold text-xs flex-shrink-0">
-                      {user.fullName?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
+                    <UserAvatar src={avatarSrc} name={user.fullName} className="h-7 w-7 rounded-full" textClassName="text-xs font-semibold" />
                     <span className="hidden sm:block max-w-[120px] truncate">{user.fullName}</span>
                     <ChevronDown className={`h-3.5 w-3.5 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
                   </button>

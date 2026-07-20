@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, X, CheckCircle, AlertCircle, Image } from 'lucide-react';
-import { BACKEND_ORIGIN } from '../../services/apiBase';
+import { BACKEND_ORIGIN, getMediaUrl } from '../../services/apiBase';
 
 const DocumentUploadCard = ({
   label,
@@ -23,49 +23,60 @@ const DocumentUploadCard = ({
     setUploaded(!!value);
   }, [value]);
 
-  const isPhotoField = fieldName === 'photo';
+  const isPhotoField = fieldName === 'photo' || fieldName === 'profilePhoto';
 
-  const validateFile = (file) => {
-    if (!file) return 'No file selected.';
+  const validateAndHandle = (file) => {
+    setError('');
 
-    const maxSize = 2 * 1024 * 1024; // 2MB
-    if (file.size > maxSize) return 'File size exceeds 2MB.';
+    if (!file) return;
 
-    const ext = file.name.split('.').pop().toLowerCase();
-    if (isPhotoField && !['jpg', 'jpeg', 'png'].includes(ext)) {
-      return 'Photo must be JPG or PNG.';
-    }
-    if (!isPhotoField && ext !== 'pdf') {
-      return 'Only PDF files are accepted.';
-    }
-    return '';
-  };
-
-  const handleFile = (file) => {
-    const err = validateFile(file);
-    if (err) {
-      setError(err);
+    // Check size limit (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError('File size must be less than 2MB.');
       return;
     }
-    setError('');
-    setUploaded(true);
 
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    // Check file type
     if (isPhotoField) {
+      if (!['jpg', 'jpeg', 'png'].includes(ext)) {
+        setError('Photo must be JPG or PNG format.');
+        return;
+      }
+      // Create preview for image
       const reader = new FileReader();
-      reader.onload = (e) => setPreview(e.target.result);
+      reader.onloadend = () => setPreview(reader.result);
       reader.readAsDataURL(file);
     } else {
+      if (ext !== 'pdf') {
+        setError('File must be in PDF format.');
+        return;
+      }
       setPreview(file.name);
     }
 
+    setUploaded(true);
     onChange && onChange(fieldName, file);
   };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const handleDragLeave = () => setDragging(false);
 
   const handleDrop = (e) => {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    validateAndHandle(file);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    validateAndHandle(file);
   };
 
   const handleRemove = () => {
@@ -87,13 +98,14 @@ const DocumentUploadCard = ({
           {isPhotoField && (preview || value) ? (
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <img
-                src={preview || (value?.startsWith('data:') || value?.startsWith('http') ? value : `${BACKEND_ORIGIN}${value}`)}
+                src={preview || getMediaUrl(value)}
                 alt="preview"
                 className="h-10 w-10 rounded-lg object-cover border border-green-200"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               {value && (
                 <a
-                  href={value?.startsWith('http') ? value : `${BACKEND_ORIGIN}${value}`}
+                  href={getMediaUrl(value)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs text-primary hover:underline font-bold truncate"
@@ -108,7 +120,7 @@ const DocumentUploadCard = ({
               <span className="text-sm text-green-700 truncate">{preview || 'File uploaded'}</span>
               {value && (
                 <a
-                  href={value?.startsWith('http') ? value : `${BACKEND_ORIGIN}${value}`}
+                  href={getMediaUrl(value)}
                   target="_blank"
                   rel="noreferrer"
                   className="text-xs text-primary hover:underline font-bold ml-2 shrink-0"

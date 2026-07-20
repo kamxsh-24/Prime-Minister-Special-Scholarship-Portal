@@ -204,8 +204,8 @@
 }
 
 /* ─── Dashboard Gradient Headers ─────────────── */
-.dash-header-blue {
-  background: linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%);
+.dash-header-green {
+  background: linear-gradient(135deg, #047857 0%, #10B981 50%, #34D399 100%);
 }
 
 .dash-header-accent {
@@ -300,7 +300,7 @@
 .high-contrast .border-gray-100 {
   border-color: #ffffff !important;
 }
-.high-contrast .dash-header-blue {
+.high-contrast .dash-header-green {
   background: #000000 !important;
   border: 2px solid #ffffff !important;
 }

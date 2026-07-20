@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import StatusBadge from '../components/ui/StatusBadge';
+import UserAvatar from '../components/ui/UserAvatar';
 import { SkeletonCard } from '../components/ui/SkeletonLoader';
 import { showError, showSuccess, showInfo } from '../store/slices/toastSlice';
 import { applicationSuccess } from '../store/slices/applicationSlice';
@@ -191,15 +192,18 @@ const Dashboard = () => {
       <div className="space-y-6">
         
         {/* Welcome Banner */}
-        <div className="dash-header-blue rounded-3xl p-6 text-white relative overflow-hidden shadow-md">
+        <div className="dash-header-green rounded-3xl p-6 text-white relative overflow-hidden shadow-md">
           <div
             className="absolute right-0 top-0 bottom-0 w-64 opacity-15"
             style={{ background: 'radial-gradient(circle at 80% 50%, white, transparent)' }}
           />
           <div className="flex items-center gap-4 relative">
-            <div className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-black shadow flex-shrink-0">
-              {user?.fullName?.charAt(0)?.toUpperCase()}
-            </div>
+            <UserAvatar
+              src={user?.profilePhoto || profile?.profilePhoto}
+              name={user?.fullName}
+              className="h-16 w-16 bg-white/20 rounded-2xl flex items-center justify-center text-2xl font-black shadow flex-shrink-0"
+              textClassName="text-2xl font-black text-white"
+            />
             <div>
               <p className="text-white/80 text-xs font-semibold">{t('home')} / {t('dashboard')}</p>
               <h1 className="text-2xl font-black tracking-tight mt-0.5">Welcome, {user?.fullName}</h1>

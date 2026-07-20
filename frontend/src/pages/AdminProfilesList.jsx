@@ -6,6 +6,7 @@ import { SkeletonTable } from '../components/ui/SkeletonLoader';
 import { showError } from '../store/slices/toastSlice';
 import { getAllProfiles } from '../services/adminService';
 import { BACKEND_ORIGIN } from '../services/apiBase';
+import UserAvatar from '../components/ui/UserAvatar';
 import { Search, Eye, AlertTriangle, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
 const AdminProfilesList = () => {
@@ -135,17 +136,12 @@ const AdminProfilesList = () => {
                       <td className="table-cell text-xs text-gray-400">{(page - 1) * 10 + i + 1}</td>
                       <td className="table-cell">
                         <div className="flex items-center gap-3">
-                          {profile.profilePhoto ? (
-                            <img
-                              src={`${BACKEND_ORIGIN}${profile.profilePhoto}`}
-                              alt=""
-                              className="h-9 w-9 rounded-full object-cover border border-gray-200 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0">
-                              {profile.fullName?.charAt(0) || 'S'}
-                            </div>
-                          )}
+                          <UserAvatar
+                            src={profile.profilePhoto}
+                            name={profile.fullName || profile.studentId?.fullName}
+                            className="h-9 w-9 rounded-full border border-gray-200"
+                            textClassName="text-xs font-bold"
+                          />
                           <div>
                             <p className="font-semibold text-gray-900 text-sm leading-tight">
                               {profile.fullName || profile.studentId?.fullName || '—'}

@@ -3,9 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import DocumentUploadCard from '../components/ui/DocumentUploadCard';
+import UserAvatar from '../components/ui/UserAvatar';
 import { getProfile, updateProfile, requestProfileDeletion } from '../services/studentService';
 import { uploadDocuments } from '../services/documentService';
 import { profileStart, profileSuccess, profileFailure } from '../store/slices/profileSlice';
+import { updateUser } from '../store/slices/authSlice';
 import { showSuccess, showError, showInfo } from '../store/slices/toastSlice';
 import { BACKEND_ORIGIN } from '../services/apiBase';
 import {
@@ -451,19 +453,12 @@ const MyProfile = () => {
         {/* Header Summary */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-card">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              {profileData.profilePhoto ? (
-                <img
-                  src={`${BACKEND_ORIGIN}${profileData.profilePhoto}`}
-                  alt="Avatar"
-                  className="h-16 w-16 rounded-full object-cover border-2 border-primary/20"
-                />
-              ) : (
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl">
-                  {profileData.fullName?.charAt(0) || user?.fullName?.charAt(0)}
-                </div>
-              )}
-            </div>
+            <UserAvatar
+              src={profileData.profilePhoto}
+              name={profileData.fullName || user?.fullName}
+              className="h-16 w-16 rounded-full border-2 border-primary/20"
+              textClassName="text-xl font-bold"
+            />
             <div>
               <h1 className="text-xl font-bold text-gray-900">{profileData.fullName || user?.fullName}</h1>
               <p className="text-xs text-gray-400 mt-0.5">Role: Student • {profileData.email}</p>

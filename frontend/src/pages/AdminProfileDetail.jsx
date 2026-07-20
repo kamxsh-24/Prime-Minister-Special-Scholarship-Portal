@@ -5,6 +5,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { getProfileById, verifyProfile, deleteProfileAdmin } from '../services/adminService';
 import { showError, showSuccess } from '../store/slices/toastSlice';
 import { BACKEND_ORIGIN } from '../services/apiBase';
+import UserAvatar from '../components/ui/UserAvatar';
 import {
   User,
   MapPin,
@@ -131,17 +132,12 @@ const AdminProfileDetail = () => {
         {/* Header summary */}
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-card flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
-            {profile.profilePhoto ? (
-              <img
-                src={`${BACKEND_ORIGIN}${profile.profilePhoto}`}
-                alt=""
-                className="h-16 w-16 rounded-full object-cover border border-gray-100"
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
-                {profile.fullName?.charAt(0) || 'S'}
-              </div>
-            )}
+            <UserAvatar
+              src={profile.profilePhoto}
+              name={profile.fullName}
+              className="h-16 w-16 rounded-full border border-gray-100"
+              textClassName="text-xl font-bold"
+            />
             <div>
               <h2 className="text-xl font-bold text-gray-900">{profile.fullName}</h2>
               <p className="text-xs text-gray-400 mt-0.5">{profile.email} • {profile.phone}</p>
