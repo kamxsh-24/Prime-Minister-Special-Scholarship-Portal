@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { showSuccess, showError } from '../store/slices/toastSlice';
 import {
   Info,
@@ -22,6 +22,7 @@ import {
 
 const ScholarshipInfoCenter = () => {
   const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
   const [activeSection, setActiveSection] = useState('details');
   const [openFaq, setOpenFaq] = useState({});
   const [rating, setRating] = useState(0);
@@ -199,10 +200,10 @@ const ScholarshipInfoCenter = () => {
                   Start your online digital application for the PMSS scholarship now.
                 </p>
                 <Link
-                  to="/login"
+                  to={user ? (user.role === 'admin' ? '/admin' : '/dashboard/application') : '/login'}
                   className="inline-flex items-center justify-center gap-2 w-full bg-accent text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:bg-accent-600 shadow-accent/20 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
                 >
-                  Apply Now
+                  {user ? (user.role === 'admin' ? 'Go to Admin Panel' : 'Go to Application') : 'Apply Now'}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -556,10 +557,10 @@ const ScholarshipInfoCenter = () => {
                 Start your online digital application for the PMSS scholarship now.
               </p>
               <Link
-                to="/login"
+                to={user ? (user.role === 'admin' ? '/admin' : '/dashboard/application') : '/login'}
                 className="inline-flex items-center justify-center gap-2 w-full bg-accent text-white text-sm font-semibold py-2.5 px-4 rounded-xl hover:bg-accent-600 shadow-accent/20 hover:shadow-lg transition-all duration-200 active:scale-[0.98]"
               >
-                Apply Now
+                {user ? (user.role === 'admin' ? 'Go to Admin Panel' : 'Go to Application') : 'Apply Now'}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

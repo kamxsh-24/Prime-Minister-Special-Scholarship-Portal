@@ -4,6 +4,7 @@ const Application = require('../models/Application');
 const User = require('../models/User');
 const emailService = require('../services/email');
 const { syncAnalyticsDb } = require('../utils/syncHelper');
+const { mergeProfileData, normalizeProfilePayload, calculateCompletionPercentage } = require('../utils/profileWorkflow');
 
 const router = express.Router();
 
@@ -15,11 +16,12 @@ const StudentProfile = require('../models/StudentProfile');
 // @route   GET /api/student/profile
 router.get('/profile', async (req, res) => {
   try {
-    const profile = await StudentProfile.findOne({ studentId: req.user._id });
+    console.log('[DEBUG] Incoming GET /api/student/profile for User ID:', req.user._id);
+    let profile = await StudentProfile.findOne({ studentId: req.user._id });
     if (!profile) {
-      // Send fallback data from registration User account
       const user = await User.findById(req.user._id);
-      const defaultProfile = {
+      const initialProfileData = {
+        studentId: req.user._id,
         fullName: user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
@@ -58,47 +60,55 @@ router.get('/profile', async (req, res) => {
         profileCompleted: false,
         completionPercentage: 0,
       };
-      return res.json({ success: true, message: 'Profile default data initialized.', data: defaultProfile, exists: false });
+
+      profile = await StudentProfile.create(initialProfileData);
+      console.log('[DEBUG] MongoDB Fetch Result (New Initialized Profile):', profile.toObject());
+      return res.json({ success: true, message: 'Profile default data initialized.', data: profile, exists: false });
     }
+    console.log('[DEBUG] MongoDB Fetch Result (Existing Profile):', profile.toObject());
     return res.json({ success: true, message: 'Profile fetched.', data: profile, exists: true });
   } catch (error) {
+    console.error('[DEBUG] Error fetching profile:', error);
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
 });
 
-// @route   PUT /api/student/profile
-router.put('/profile', async (req, res) => {
+// Profile update handler supporting both PUT and PATCH /api/student/profile
+const saveProfileHandler = async (req, res) => {
   try {
-    const {
-      fullName, dob, gender, email, phone, aadhaar, bloodGroup, nationality, category,
-      address,
-      collegeName, universityName, degree, department, yearOfStudy, rollNumber, academicYear, cgpa,
-      fatherName, motherName, parentOccupation, familyIncome,
-      bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      profilePhoto, documents
-    } = req.body;
+    console.log('[DEBUG] Incoming Request Body:', req.body);
+    let profile = await StudentProfile.findOne({ studentId: req.user._id });
+    console.log('[DEBUG] Existing Profile:', profile ? profile.toObject() : null);
+
+    if (!profile) {
+      profile = new StudentProfile({ studentId: req.user._id });
+    }
+
+    const body = req.body || {};
 
     // Email validation
-    if (email) {
+    if (body.email !== undefined && body.email !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
+      if (!emailRegex.test(body.email)) {
         return res.status(400).json({ success: false, message: 'Invalid email address format.' });
       }
     }
 
     // Phone validation
-    if (phone && phone.replace(/\D/g, '').length !== 10) {
-      return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits.' });
+    if (body.phone !== undefined && body.phone !== '') {
+      const cleanPhone = String(body.phone).replace(/\D/g, '');
+      if (cleanPhone.length !== 10) {
+        return res.status(400).json({ success: false, message: 'Mobile number must be exactly 10 digits.' });
+      }
     }
 
-    // Aadhaar validation
-    if (aadhaar) {
-      const cleanAadhaar = aadhaar.replace(/\D/g, '');
+    // Aadhaar validation & uniqueness check
+    if (body.aadhaar !== undefined && body.aadhaar !== '') {
+      const cleanAadhaar = String(body.aadhaar).replace(/\D/g, '');
       if (cleanAadhaar.length !== 12) {
         return res.status(400).json({ success: false, message: 'Aadhaar number must be exactly 12 digits.' });
       }
       
-      // Aadhaar uniqueness check
       const dup = await StudentProfile.findOne({
         studentId: { $ne: req.user._id },
         aadhaar: cleanAadhaar,
@@ -109,62 +119,94 @@ router.put('/profile', async (req, res) => {
     }
 
     // IFSC validation
-    if (ifscCode) {
+    if (body.ifscCode !== undefined && body.ifscCode !== '') {
       const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-      if (!ifscRegex.test(ifscCode.toUpperCase())) {
+      if (!ifscRegex.test(String(body.ifscCode).toUpperCase())) {
         return res.status(400).json({ success: false, message: 'Invalid bank IFSC code format. E.g. SBIN0012345' });
       }
     }
 
-    // Completion calculation
+    // Top-level fields to update after merging with existing profile data
+    const existingObj = profile.toObject();
+    const merged = mergeProfileData(existingObj, body);
+
+    const directFields = [
+      'fullName', 'dob', 'gender', 'category', 'email', 'phone', 'aadhaar', 'bloodGroup', 'nationality',
+      'collegeName', 'universityName', 'degree', 'department', 'yearOfStudy', 'rollNumber', 'academicYear', 'cgpa',
+      'fatherName', 'motherName', 'parentOccupation', 'familyIncome',
+      'bankName', 'accountHolderName', 'accountNumber', 'ifscCode', 'branchName',
+      'profilePhoto'
+    ];
+
+    directFields.forEach((field) => {
+      if (merged[field] !== undefined) {
+        profile[field] = merged[field];
+      }
+    });
+
+    // Merge nested address fields
+    if (merged.address && typeof merged.address === 'object') {
+      if (!profile.address) profile.address = {};
+      const addressFields = ['permanentAddress', 'currentAddress', 'state', 'district', 'pincode'];
+      addressFields.forEach((f) => {
+        if (merged.address[f] !== undefined) {
+          profile.address[f] = merged.address[f];
+        }
+      });
+    }
+
+    // Merge nested documents fields
+    if (merged.documents && typeof merged.documents === 'object') {
+      if (!profile.documents) profile.documents = {};
+      const docFields = ['aadhaar', 'incomeCertificate', 'casteCertificate', 'marksheet', 'bankPassbook', 'bonafide', 'photo'];
+      docFields.forEach((f) => {
+        if (merged.documents[f] !== undefined) {
+          profile.documents[f] = merged.documents[f];
+        }
+      });
+    }
+
+    console.log('[DEBUG] Merged Profile:', profile.toObject());
+
+    // Recalculate completion based on updated merged document
     const allFields = [
-      fullName, dob, gender, category, phone, email, aadhaar, bloodGroup, nationality,
-      address?.permanentAddress, address?.currentAddress, address?.state, address?.district, address?.pincode,
-      collegeName, universityName, degree, department, yearOfStudy, rollNumber, academicYear, cgpa,
-      fatherName, motherName, parentOccupation, familyIncome,
-      bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      profilePhoto,
-      documents?.aadhaar, documents?.incomeCertificate, documents?.casteCertificate, documents?.marksheet, documents?.bankPassbook
+      profile.fullName, profile.dob, profile.gender, profile.category, profile.phone, profile.email, profile.aadhaar, profile.bloodGroup, profile.nationality,
+      profile.address?.permanentAddress, profile.address?.currentAddress, profile.address?.state, profile.address?.district, profile.address?.pincode,
+      profile.collegeName, profile.universityName, profile.degree, profile.department, profile.yearOfStudy, profile.rollNumber, profile.academicYear, profile.cgpa,
+      profile.fatherName, profile.motherName, profile.parentOccupation, profile.familyIncome,
+      profile.bankName, profile.accountHolderName, profile.accountNumber, profile.ifscCode, profile.branchName,
+      profile.profilePhoto,
+      profile.documents?.aadhaar, profile.documents?.incomeCertificate, profile.documents?.casteCertificate, profile.documents?.marksheet, profile.documents?.bankPassbook
     ];
     const totalFieldsCount = allFields.length;
     const filledFieldsCount = allFields.filter(f => f !== undefined && f !== null && String(f).trim() !== '').length;
-    const completionPercentage = Math.round((filledFieldsCount / totalFieldsCount) * 100);
+    profile.completionPercentage = Math.round((filledFieldsCount / totalFieldsCount) * 100);
 
     const requiredFields = [
-      fullName, dob, gender, category, phone, email, aadhaar,
-      address?.permanentAddress, address?.state, address?.district, address?.pincode,
-      collegeName, degree, department, yearOfStudy, rollNumber, academicYear, cgpa,
-      fatherName, motherName, familyIncome,
-      bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      profilePhoto,
-      documents?.aadhaar, documents?.incomeCertificate, documents?.marksheet, documents?.bankPassbook
+      profile.fullName, profile.dob, profile.gender, profile.category, profile.phone, profile.email, profile.aadhaar,
+      profile.address?.permanentAddress, profile.address?.state, profile.address?.district, profile.address?.pincode,
+      profile.collegeName, profile.degree, profile.department, profile.yearOfStudy, profile.rollNumber, profile.academicYear, profile.cgpa,
+      profile.fatherName, profile.motherName, profile.familyIncome,
+      profile.bankName, profile.accountHolderName, profile.accountNumber, profile.ifscCode, profile.branchName,
+      profile.profilePhoto,
+      profile.documents?.aadhaar, profile.documents?.incomeCertificate, profile.documents?.marksheet, profile.documents?.bankPassbook
     ];
-    const profileCompleted = requiredFields.every(f => f !== undefined && f !== null && String(f).trim() !== '');
+    profile.profileCompleted = requiredFields.every(f => f !== undefined && f !== null && String(f).trim() !== '');
 
-    const profileData = {
-      fullName, dob, gender, category, email, phone, aadhaar, bloodGroup, nationality,
-      address,
-      collegeName, universityName, degree, department, yearOfStudy, rollNumber, academicYear, cgpa,
-      fatherName, motherName, parentOccupation, familyIncome,
-      bankName, accountHolderName, accountNumber, ifscCode, branchName,
-      profilePhoto, documents,
-      profileCompleted,
-      completionPercentage
-    };
-
-    let profile = await StudentProfile.findOne({ studentId: req.user._id });
-    if (!profile) {
-      profile = new StudentProfile({ studentId: req.user._id, ...profileData });
-    } else {
-      Object.assign(profile, profileData);
-    }
-    
     await profile.save();
+    console.log('[DEBUG] MongoDB Update Result:', profile.toObject());
     return res.json({ success: true, message: 'Profile saved successfully.', data: profile });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
+    console.error('[DEBUG] Error saving profile:', error);
+    return res.status(500).json({ success: false, message: 'Server error saving profile.', error: error.message });
   }
-});
+};
+
+// @route   PUT /api/student/profile
+router.put('/profile', saveProfileHandler);
+
+// @route   PATCH /api/student/profile
+router.patch('/profile', saveProfileHandler);
 
 // @route   POST /api/student/profile/delete-request
 router.post('/profile/delete-request', async (req, res) => {

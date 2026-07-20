@@ -46,6 +46,8 @@ const initialDocs = {
   bankPassbook: null, bonafide: null, photo: null,
 };
 
+const PROFILE_CACHE_KEY = 'pmsss-profile-cache';
+
 const FloatInput = ({ id, name, label, value, onChange, type = 'text', required, maxLength, disabled }) => (
   <div className="form-group">
     <input
@@ -75,6 +77,7 @@ const ScholarshipApplicationForm = () => {
   const { t } = useTranslation();
   const { user, token } = useSelector((s) => s.auth);
   const { application } = useSelector((s) => s.application);
+  const { profile: reduxProfile } = useSelector((s) => s.profile);
 
   const [step, setStep] = useState(0);
   const [personal, setPersonal] = useState(initialPersonal);
@@ -97,11 +100,21 @@ const ScholarshipApplicationForm = () => {
   useEffect(() => {
     const fetchStudentProfile = async () => {
       try {
+        if (typeof window !== 'undefined') {
+          const cachedProfile = window.sessionStorage.getItem(PROFILE_CACHE_KEY);
+          if (cachedProfile) {
+            const parsed = JSON.parse(cachedProfile);
+            setProfile(parsed);
+          }
+        }
+
         const res = await getProfile();
         if (res.data.success) {
-          // Verify if profile exists and has been created
           if (res.data.exists) {
             setProfile(res.data.data);
+            if (typeof window !== 'undefined') {
+              window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(res.data.data));
+            }
           } else {
             setProfile(null);
           }
@@ -115,38 +128,69 @@ const ScholarshipApplicationForm = () => {
     fetchStudentProfile();
   }, []);
 
+  useEffect(() => {
+    if (reduxProfile) {
+      setProfile(reduxProfile);
+    }
+  }, [reduxProfile]);
+
+  useEffect(() => {
+    const refreshProfileOnUpdate = async () => {
+      try {
+        const res = await getProfile();
+        if (res.data.success && res.data.data) {
+          setProfile(res.data.data);
+          dispatch(profileSuccess({ data: res.data.data, exists: true }));
+        }
+      } catch (err) {
+        console.error('Failed to refresh profile after update:', err);
+      }
+    };
+
+    window.addEventListener('pmsss-profile-updated', refreshProfileOnUpdate);
+    return () => window.removeEventListener('pmsss-profile-updated', refreshProfileOnUpdate);
+  }, [dispatch]);
+
   // Pre-fill from student profile when loaded
   useEffect(() => {
-    if (profile && (profile.completionPercentage || 0) >= 80) {
+    if (profile) {
       setPersonal((p) => ({
         ...p,
-        fullName: profile.fullName || '',
-        dateOfBirth: profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : '',
-        gender: profile.gender || '',
-        aadhaarNumber: profile.aadhaar || '',
-        phone: profile.phone || '',
-        email: profile.email || '',
-        permanentAddress: profile.address?.permanentAddress || '',
-        state: profile.address?.state || '',
-        district: profile.address?.district || '',
-        annualIncome: profile.familyIncome || '',
+        fullName: p.fullName || profile.fullName || '',
+        dateOfBirth: p.dateOfBirth || (profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : ''),
+        gender: p.gender || profile.gender || '',
+        category: p.category || profile.category || '',
+        aadhaarNumber: p.aadhaarNumber || profile.aadhaar || '',
+        phone: p.phone || profile.phone || '',
+        email: p.email || profile.email || '',
+        permanentAddress: p.permanentAddress || profile.address?.permanentAddress || '',
+        currentAddress: p.currentAddress || profile.address?.currentAddress || '',
+        state: p.state || profile.address?.state || '',
+        district: p.district || profile.address?.district || '',
+        pincode: p.pincode || profile.address?.pincode || '',
+        fatherName: p.fatherName || profile.fatherName || '',
+        motherName: p.motherName || profile.motherName || '',
+        parentOccupation: p.parentOccupation || profile.parentOccupation || '',
+        annualIncome: p.annualIncome || profile.familyIncome || '',
       }));
       setAcademic((a) => ({
         ...a,
-        institutionName: profile.collegeName || '',
-        courseName: profile.degree || '',
-        yearOfStudy: profile.yearOfStudy || '',
-        rollNumber: profile.rollNumber || '',
-        previousYearMarks: profile.cgpa || '',
-        boardUniversityName: profile.universityName || '',
+        institutionName: a.institutionName || profile.collegeName || '',
+        boardUniversityName: a.boardUniversityName || profile.universityName || '',
+        courseName: a.courseName || profile.degree || '',
+        department: a.department || profile.department || '',
+        yearOfStudy: a.yearOfStudy || profile.yearOfStudy || '',
+        rollNumber: a.rollNumber || profile.rollNumber || '',
+        academicYear: a.academicYear || profile.academicYear || '',
+        previousYearMarks: a.previousYearMarks || profile.cgpa || '',
       }));
       setBank((b) => ({
         ...b,
-        accountHolderName: profile.accountHolderName || '',
-        bankName: profile.bankName || '',
-        branchName: profile.branchName || '',
-        accountNumber: profile.accountNumber || '',
-        ifscCode: profile.ifscCode || '',
+        accountHolderName: b.accountHolderName || profile.accountHolderName || '',
+        bankName: b.bankName || profile.bankName || '',
+        branchName: b.branchName || profile.branchName || '',
+        accountNumber: b.accountNumber || profile.accountNumber || '',
+        ifscCode: b.ifscCode || profile.ifscCode || '',
       }));
     }
   }, [profile]);

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import Navbar from '../components/layout/Navbar';
 import ScholarshipInfoCenter from '../components/ScholarshipInfoCenter';
 import {
@@ -40,6 +41,8 @@ const stats = [
 ];
 
 const HomePage = () => {
+  const { user } = useSelector((s) => s.auth);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Government tricolor strip */}
@@ -69,13 +72,25 @@ const HomePage = () => {
               financial support for higher education. Apply online — completely paperless.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link to="/register" className="btn-accent px-7 py-3 text-base shadow-lg">
-                Apply Now
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link to="/login" className="inline-flex items-center gap-2 px-7 py-3 bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl text-white font-medium text-base transition-all duration-200">
-                Sign In
-              </Link>
+              {user ? (
+                <Link
+                  to={user.role === 'admin' ? '/admin' : '/dashboard'}
+                  className="btn-accent px-7 py-3 text-base shadow-lg"
+                >
+                  {user.role === 'admin' ? 'Go to Admin Panel' : 'Go to Dashboard'}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn-accent px-7 py-3 text-base shadow-lg">
+                    Apply Now
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link to="/login" className="inline-flex items-center gap-2 px-7 py-3 bg-white/10 hover:bg-white/20 border border-white/30 rounded-xl text-white font-medium text-base transition-all duration-200">
+                    Sign In
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -195,8 +210,11 @@ const HomePage = () => {
             })}
           </div>
           <div className="text-center mt-10">
-            <Link to="/register" className="btn-primary px-8 py-3 text-base shadow-primary">
-              Start Your Application
+            <Link
+              to={user ? (user.role === 'admin' ? '/admin' : '/dashboard/application') : '/register'}
+              className="btn-primary px-8 py-3 text-base shadow-primary"
+            >
+              {user ? (user.role === 'admin' ? 'Go to Admin Panel' : 'Go to Application') : 'Start Your Application'}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

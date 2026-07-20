@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { BarChart3, Users, CheckCircle2, Landmark, Search, ArrowRight, ShieldCheck, Globe } from 'lucide-react';
 import { API_BASE_URL } from '../services/apiBase';
 
 const PublicTransparency = () => {
   const navigate = useNavigate();
+  const { user } = useSelector((s) => s.auth);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,10 +56,10 @@ const PublicTransparency = () => {
           </div>
           <div className="flex items-center gap-3">
             <Link
-              to="/login"
+              to={user ? (user.role === 'admin' ? '/admin' : '/dashboard') : '/login'}
               className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition"
             >
-              Student Portal
+              {user ? (user.role === 'admin' ? 'Admin Panel' : 'Dashboard') : 'Student Portal'}
             </Link>
             <Link
               to="/"

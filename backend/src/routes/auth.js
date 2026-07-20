@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const StudentProfile = require('../models/StudentProfile');
 
 const router = express.Router();
 
@@ -89,6 +90,26 @@ router.post('/register', async (req, res) => {
       yearOfStudy,
       role: finalRole,
       isActive: true,
+    });
+
+    await StudentProfile.create({
+      studentId: user._id,
+      fullName: user.fullName || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      dob: user.dateOfBirth || null,
+      nationality: 'Indian',
+      address: {
+        state: user.state || '',
+        district: user.district || '',
+      },
+      collegeName: user.institution || '',
+      degree: '',
+      department: user.course || '',
+      yearOfStudy: user.yearOfStudy || '',
+      documents: {},
+      profileCompleted: false,
+      completionPercentage: 0,
     });
 
     // Create Audit Log

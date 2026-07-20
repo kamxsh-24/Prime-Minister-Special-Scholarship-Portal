@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "kamesh": "vite --port 1024",
+    "start": "vite --port 1024",
     "build": "vite build",
     "preview": "vite preview"
   },

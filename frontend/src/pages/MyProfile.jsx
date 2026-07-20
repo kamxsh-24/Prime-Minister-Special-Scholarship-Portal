@@ -42,6 +42,65 @@ const STATES = [
   'Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh',
 ];
 
+const PROFILE_CACHE_KEY = 'pmsss-profile-cache';
+
+const normalizeProfileData = (data) => {
+  let formattedDob = '';
+  if (data?.dob) {
+    formattedDob = new Date(data.dob).toISOString().split('T')[0];
+  }
+
+  return {
+    fullName: data?.fullName || '',
+    dob: formattedDob,
+    gender: data?.gender || '',
+    email: data?.email || '',
+    phone: data?.phone || '',
+    aadhaar: data?.aadhaar || '',
+    bloodGroup: data?.bloodGroup || '',
+    nationality: data?.nationality || 'Indian',
+    address: {
+      permanentAddress: data?.address?.permanentAddress || '',
+      currentAddress: data?.address?.currentAddress || '',
+      state: data?.address?.state || '',
+      district: data?.address?.district || '',
+      pincode: data?.address?.pincode || '',
+    },
+    collegeName: data?.collegeName || '',
+    universityName: data?.universityName || '',
+    degree: data?.degree || '',
+    department: data?.department || '',
+    yearOfStudy: data?.yearOfStudy || '',
+    rollNumber: data?.rollNumber || '',
+    academicYear: data?.academicYear || '',
+    cgpa: data?.cgpa ?? '',
+    fatherName: data?.fatherName || '',
+    motherName: data?.motherName || '',
+    parentOccupation: data?.parentOccupation || '',
+    familyIncome: data?.familyIncome ?? '',
+    bankName: data?.bankName || '',
+    accountHolderName: data?.accountHolderName || '',
+    accountNumber: data?.accountNumber || '',
+    ifscCode: data?.ifscCode || '',
+    branchName: data?.branchName || '',
+    profilePhoto: data?.profilePhoto || '',
+    category: data?.category || '',
+    documents: {
+      aadhaar: data?.documents?.aadhaar || '',
+      incomeCertificate: data?.documents?.incomeCertificate || '',
+      casteCertificate: data?.documents?.casteCertificate || '',
+      marksheet: data?.documents?.marksheet || '',
+      bankPassbook: data?.documents?.bankPassbook || '',
+    },
+    documentStatuses: data?.documentStatuses || {},
+    profileCompleted: data?.profileCompleted || false,
+    completionPercentage: data?.completionPercentage || 0,
+    verificationStatus: data?.verificationStatus || 'pending',
+    verificationRemarks: data?.verificationRemarks || '',
+    deleteRequested: data?.deleteRequested || false,
+  };
+};
+
 const MyProfile = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -69,67 +128,31 @@ const MyProfile = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const cachedProfile = window.sessionStorage.getItem(PROFILE_CACHE_KEY);
+          if (cachedProfile) {
+            const parsed = JSON.parse(cachedProfile);
+            setProfileData(normalizeProfileData(parsed));
+          }
+        } catch {
+          // ignore cache parse failures
+        }
+      }
+
       dispatch(profileStart());
       try {
         const res = await getProfile();
         if (res.data.success && res.data.data) {
           const data = res.data.data;
-          
-          // Format date if present
-          let formattedDob = '';
-          if (data.dob) {
-            formattedDob = new Date(data.dob).toISOString().split('T')[0];
-          }
+          const nextProfileData = normalizeProfileData(data);
+          console.log('[DEBUG] React State (profileData):', nextProfileData);
+          console.log('[DEBUG] Redux State (user):', user);
+          setProfileData(nextProfileData);
 
-          setProfileData({
-            fullName: data.fullName || '',
-            dob: formattedDob,
-            gender: data.gender || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            aadhaar: data.aadhaar || '',
-            bloodGroup: data.bloodGroup || '',
-            nationality: data.nationality || 'Indian',
-            address: {
-              permanentAddress: data.address?.permanentAddress || '',
-              currentAddress: data.address?.currentAddress || '',
-              state: data.address?.state || '',
-              district: data.address?.district || '',
-              pincode: data.address?.pincode || '',
-            },
-            collegeName: data.collegeName || '',
-            universityName: data.universityName || '',
-            degree: data.degree || '',
-            department: data.department || '',
-            yearOfStudy: data.yearOfStudy || '',
-            rollNumber: data.rollNumber || '',
-            academicYear: data.academicYear || '',
-            cgpa: data.cgpa || '',
-            fatherName: data.fatherName || '',
-            motherName: data.motherName || '',
-            parentOccupation: data.parentOccupation || '',
-            familyIncome: data.familyIncome || '',
-            bankName: data.bankName || '',
-            accountHolderName: data.accountHolderName || '',
-            accountNumber: data.accountNumber || '',
-            ifscCode: data.ifscCode || '',
-            branchName: data.branchName || '',
-            profilePhoto: data.profilePhoto || '',
-            category: data.category || '',
-            documents: {
-              aadhaar: data.documents?.aadhaar || '',
-              incomeCertificate: data.documents?.incomeCertificate || '',
-              casteCertificate: data.documents?.casteCertificate || '',
-              marksheet: data.documents?.marksheet || '',
-              bankPassbook: data.documents?.bankPassbook || '',
-            },
-            documentStatuses: data.documentStatuses || {},
-            profileCompleted: data.profileCompleted || false,
-            completionPercentage: data.completionPercentage || 0,
-            verificationStatus: data.verificationStatus || 'pending',
-            verificationRemarks: data.verificationRemarks || '',
-            deleteRequested: data.deleteRequested || false,
-          });
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data));
+          }
 
           dispatch(profileSuccess({ data, exists: res.data.exists }));
         }
@@ -141,20 +164,27 @@ const MyProfile = () => {
       }
     };
     loadProfile();
-  }, [dispatch]);
+  }, [dispatch, user]);
 
   const handleFieldChange = (e) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({ ...prev, [name]: value }));
-    validateField(name, value);
+    setProfileData((prev) => {
+      const next = { ...prev, [name]: value };
+      validateCurrentSection(next);
+      return next;
+    });
   };
 
   const handleAddressChange = (e) => {
     const { name, value } = e.target;
-    setProfileData((prev) => ({
-      ...prev,
-      address: { ...prev.address, [name]: value }
-    }));
+    setProfileData((prev) => {
+      const next = {
+        ...prev,
+        address: { ...prev.address, [name]: value }
+      };
+      validateCurrentSection(next);
+      return next;
+    });
   };
 
   const handleDocChange = (fieldName, file) => {
@@ -162,41 +192,94 @@ const MyProfile = () => {
   };
 
   // Form Validation logic
-  const validateField = (name, value) => {
-    const errors = { ...validationErrors };
-    if (name === 'email') {
-      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (value && !regex.test(value)) {
-        errors.email = 'Invalid email address format.';
-      } else {
-        delete errors.email;
+  const getFieldValue = (source, path) => path.split('.').reduce((acc, key) => acc?.[key], source);
+
+  const sectionRules = {
+    personal: [
+      { field: 'fullName', path: 'fullName', message: 'Full Name is required.' },
+      { field: 'dob', path: 'dob', message: 'Date of Birth is required.' },
+      { field: 'gender', path: 'gender', message: 'Gender is required.' },
+      { field: 'category', path: 'category', message: 'Category is required.' },
+      { field: 'nationality', path: 'nationality', message: 'Nationality is required.' },
+      { field: 'email', path: 'email', message: 'Email Address is required.' },
+      { field: 'phone', path: 'phone', message: 'Mobile Number is required.' },
+      { field: 'aadhaar', path: 'aadhaar', message: 'Aadhaar Number is required.' },
+    ],
+    address: [
+      { field: 'address.permanentAddress', path: 'address.permanentAddress', message: 'Permanent Address is required.' },
+      { field: 'address.currentAddress', path: 'address.currentAddress', message: 'Current Address is required.' },
+      { field: 'address.state', path: 'address.state', message: 'State is required.' },
+      { field: 'address.district', path: 'address.district', message: 'District is required.' },
+      { field: 'address.pincode', path: 'address.pincode', message: 'Pincode is required.' },
+    ],
+    academic: [
+      { field: 'collegeName', path: 'collegeName', message: 'College / Institution is required.' },
+      { field: 'universityName', path: 'universityName', message: 'Affiliated University is required.' },
+      { field: 'degree', path: 'degree', message: 'Degree is required.' },
+      { field: 'department', path: 'department', message: 'Department is required.' },
+      { field: 'yearOfStudy', path: 'yearOfStudy', message: 'Year of Study is required.' },
+      { field: 'rollNumber', path: 'rollNumber', message: 'Roll Number is required.' },
+      { field: 'academicYear', path: 'academicYear', message: 'Academic Year is required.' },
+      { field: 'cgpa', path: 'cgpa', message: 'CGPA / Percentage is required.' },
+    ],
+    family: [
+      { field: 'fatherName', path: 'fatherName', message: 'Father\'s Name is required.' },
+      { field: 'motherName', path: 'motherName', message: 'Mother\'s Name is required.' },
+      { field: 'parentOccupation', path: 'parentOccupation', message: 'Parent Occupation is required.' },
+      { field: 'familyIncome', path: 'familyIncome', message: 'Family Income is required.' },
+    ],
+    bank: [
+      { field: 'accountHolderName', path: 'accountHolderName', message: 'Account Holder Name is required.' },
+      { field: 'bankName', path: 'bankName', message: 'Bank Name is required.' },
+      { field: 'branchName', path: 'branchName', message: 'Branch Name is required.' },
+      { field: 'accountNumber', path: 'accountNumber', message: 'Account Number is required.' },
+      { field: 'ifscCode', path: 'ifscCode', message: 'IFSC Code is required.' },
+    ],
+    documents: [],
+  };
+
+  const validateCurrentSection = (data = profileData, section = activeTab) => {
+    const errors = {};
+    const rules = sectionRules[section] || [];
+
+    rules.forEach(({ field, path, message }) => {
+      const value = getFieldValue(data, path);
+      if (!value || String(value).trim() === '') {
+        errors[field] = message;
+      }
+    });
+
+    if (section === 'personal') {
+      if (data.email?.trim()) {
+        const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!regex.test(data.email)) {
+          errors.email = 'Invalid email address format.';
+        }
+      }
+      if (data.phone?.trim()) {
+        const cleanVal = data.phone.replace(/\D/g, '');
+        if (cleanVal.length !== 10) {
+          errors.phone = 'Mobile number must be exactly 10 digits.';
+        }
+      }
+      if (data.aadhaar?.trim()) {
+        const cleanVal = data.aadhaar.replace(/\D/g, '');
+        if (cleanVal.length !== 12) {
+          errors.aadhaar = 'Aadhaar must be exactly 12 digits.';
+        }
       }
     }
-    if (name === 'phone') {
-      const cleanVal = value.replace(/\D/g, '');
-      if (value && cleanVal.length !== 10) {
-        errors.phone = 'Mobile number must be exactly 10 digits.';
-      } else {
-        delete errors.phone;
-      }
-    }
-    if (name === 'aadhaar') {
-      const cleanVal = value.replace(/\D/g, '');
-      if (value && cleanVal.length !== 12) {
-        errors.aadhaar = 'Aadhaar must be exactly 12 digits.';
-      } else {
-        delete errors.aadhaar;
-      }
-    }
-    if (name === 'ifscCode') {
+
+    if (section === 'bank' && data.ifscCode?.trim()) {
       const regex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-      if (value && !regex.test(value.toUpperCase())) {
+      if (!regex.test(data.ifscCode.toUpperCase())) {
         errors.ifscCode = 'IFSC format is incorrect (e.g. SBIN0001234).';
-      } else {
-        delete errors.ifscCode;
       }
     }
+
+    console.log(`[profile-validation][${section}]`, errors);
     setValidationErrors(errors);
+    return errors;
   };
 
   const calculateCompletion = () => {
@@ -219,8 +302,9 @@ const MyProfile = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (Object.keys(validationErrors).length > 0) {
-      dispatch(showError('Please resolve all validation errors before saving.'));
+    const sectionErrors = validateCurrentSection(profileData, activeTab);
+    if (Object.keys(sectionErrors).length > 0) {
+      dispatch(showError('Please complete the required fields in this section.'));
       return;
     }
 
@@ -243,7 +327,6 @@ const MyProfile = () => {
           const urls = uploadRes.data.data;
           if (urls.photo) updatedPhoto = urls.photo;
           
-          // Map castes or marksheet documents
           Object.keys(urls).forEach((key) => {
             if (key !== 'photo') {
               updatedDocs[key] = urls[key];
@@ -252,22 +335,69 @@ const MyProfile = () => {
         }
       }
 
-      // 2. Submit Profile Update payload
+      // 2. Submit Profile Update payload (Always send the complete profile object)
       const payload = {
-        ...profileData,
+        fullName: profileData.fullName,
+        dob: profileData.dob ? new Date(profileData.dob) : null,
+        gender: profileData.gender,
+        category: profileData.category,
+        email: profileData.email,
+        phone: profileData.phone,
+        aadhaar: profileData.aadhaar,
+        bloodGroup: profileData.bloodGroup,
+        nationality: profileData.nationality,
+        address: {
+          permanentAddress: profileData.address?.permanentAddress || '',
+          currentAddress: profileData.address?.currentAddress || '',
+          state: profileData.address?.state || '',
+          district: profileData.address?.district || '',
+          pincode: profileData.address?.pincode || '',
+        },
+        collegeName: profileData.collegeName,
+        universityName: profileData.universityName,
+        degree: profileData.degree,
+        department: profileData.department,
+        yearOfStudy: profileData.yearOfStudy,
+        rollNumber: profileData.rollNumber,
+        academicYear: profileData.academicYear,
+        cgpa: profileData.cgpa,
+        fatherName: profileData.fatherName,
+        motherName: profileData.motherName,
+        parentOccupation: profileData.parentOccupation,
+        familyIncome: profileData.familyIncome,
+        bankName: profileData.bankName,
+        accountHolderName: profileData.accountHolderName,
+        accountNumber: profileData.accountNumber,
+        ifscCode: profileData.ifscCode,
+        branchName: profileData.branchName,
         profilePhoto: updatedPhoto,
         documents: updatedDocs,
       };
 
       const res = await updateProfile(payload);
       if (res.data.success) {
-        dispatch(showSuccess('Profile updated successfully!'));
-        setProfileData(prev => ({
-          ...prev,
-          ...res.data.data
-        }));
-        dispatch(profileSuccess({ data: res.data.data, exists: true }));
+        dispatch(showSuccess('Profile updated successfully.'));
+
+        const latestRes = await getProfile();
+        if (latestRes.data.success && latestRes.data.data) {
+          const freshData = latestRes.data.data;
+          const nextProfileData = normalizeProfileData(freshData);
+          setProfileData(nextProfileData);
+
+          if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(freshData));
+          }
+
+          dispatch(profileSuccess({ data: freshData, exists: true }));
+          window.dispatchEvent(new Event('pmsss-profile-updated'));
+        }
+
+        const currentIndex = TABS.findIndex((tab) => tab.id === activeTab);
+        if (currentIndex >= 0 && currentIndex < TABS.length - 1) {
+          setActiveTab(TABS[currentIndex + 1].id);
+        }
         setSelectedFiles({});
+        setValidationErrors({});
       }
     } catch (err) {
       dispatch(showError(err.response?.data?.message || 'Failed to save profile.'));
@@ -293,6 +423,16 @@ const MyProfile = () => {
   };
 
   const completionPercent = calculateCompletion();
+
+  const renderValidationMessage = (field) =>
+    validationErrors[field] ? (
+      <p className="mt-1 text-[11px] text-red-500">{validationErrors[field]}</p>
+    ) : null;
+
+  const getFieldClassName = (fieldName, baseClass = 'form-input') => {
+    const hasError = Boolean(validationErrors[fieldName]);
+    return `${baseClass} ${hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`.trim();
+  };
 
   if (loading) {
     return (
@@ -400,40 +540,41 @@ const MyProfile = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Personal Information</h3>
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div>
+                        <label htmlFor="fullName" className="text-xs font-semibold text-gray-500 mb-1 block">Full Name *</label>
                         <input
                           type="text" id="fullName" name="fullName" placeholder="Full Name"
-                          value={profileData.fullName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.fullName} onChange={handleFieldChange} className={getFieldClassName('fullName', 'form-input')} required
                         />
-                        <label htmlFor="fullName" className="form-label">Full Name *</label>
                       </div>
-                      <div className="form-group">
+                      <div>
+                        <label htmlFor="dob" className="text-xs font-semibold text-gray-500 mb-1 block">Date of Birth *</label>
                         <input
                           type="date" id="dob" name="dob" placeholder="Date of Birth"
-                          value={profileData.dob} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.dob} onChange={handleFieldChange} className={getFieldClassName('dob', 'form-input')} required
                         />
-                        <label htmlFor="dob" className="form-label">Date of Birth *</label>
                       </div>
                     </div>
 
-                    <div className="grid sm:grid-cols-4 gap-4">
-                      <div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="space-y-1">
                         <label htmlFor="gender" className="text-xs font-semibold text-gray-500 mb-1 block">Gender *</label>
                         <select
                           id="gender" name="gender" value={profileData.gender} onChange={handleFieldChange}
-                          className="form-select" required
+                          className={getFieldClassName('gender', 'form-select')} required
                         >
                           <option value="">Select Gender</option>
                           <option value="Male">Male</option>
                           <option value="Female">Female</option>
                           <option value="Other">Other</option>
                         </select>
+                        {renderValidationMessage('gender')}
                       </div>
-                      <div>
+                      <div className="space-y-1">
                         <label htmlFor="category" className="text-xs font-semibold text-gray-500 mb-1 block">Category *</label>
                         <select
                           id="category" name="category" value={profileData.category} onChange={handleFieldChange}
-                          className="form-select" required
+                          className={getFieldClassName('category', 'form-select')} required
                         >
                           <option value="">Select Category</option>
                           <option value="General">General</option>
@@ -441,47 +582,49 @@ const MyProfile = () => {
                           <option value="SC">SC</option>
                           <option value="ST">ST</option>
                         </select>
+                        {renderValidationMessage('category')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="bloodGroup" className="text-xs font-semibold text-gray-500 mb-1 block">Blood Group</label>
                         <input
-                          type="text" id="bloodGroup" name="bloodGroup" placeholder="Blood Group"
+                          type="text" id="bloodGroup" name="bloodGroup" placeholder="Blood Group (e.g. O+)"
                           value={profileData.bloodGroup} onChange={handleFieldChange} className="form-input"
                         />
-                        <label htmlFor="bloodGroup" className="form-label">Blood Group</label>
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="nationality" className="text-xs font-semibold text-gray-500 mb-1 block">Nationality *</label>
                         <input
                           type="text" id="nationality" name="nationality" placeholder="Nationality"
-                          value={profileData.nationality} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.nationality} onChange={handleFieldChange} className={getFieldClassName('nationality', 'form-input')} required
                         />
-                        <label htmlFor="nationality" className="form-label">Nationality *</label>
+                        {renderValidationMessage('nationality')}
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-3 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="email" className="text-xs font-semibold text-gray-500 mb-1 block">Email Address *</label>
                         <input
                           type="email" id="email" name="email" placeholder="Email Address"
-                          value={profileData.email} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.email} onChange={handleFieldChange} className={getFieldClassName('email', 'form-input')} required
                         />
-                        <label htmlFor="email" className="form-label">Email Address *</label>
-                        {validationErrors.email && <p className="text-red-500 text-[10px] mt-1">{validationErrors.email}</p>}
+                        {renderValidationMessage('email')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="phone" className="text-xs font-semibold text-gray-500 mb-1 block">Mobile Number *</label>
                         <input
                           type="text" id="phone" name="phone" placeholder="Mobile Number"
-                          value={profileData.phone} onChange={handleFieldChange} className="form-input" required maxLength={10}
+                          value={profileData.phone} onChange={handleFieldChange} className={getFieldClassName('phone', 'form-input')} required maxLength={10}
                         />
-                        <label htmlFor="phone" className="form-label">Mobile Number *</label>
-                        {validationErrors.phone && <p className="text-red-500 text-[10px] mt-1">{validationErrors.phone}</p>}
+                        {renderValidationMessage('phone')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="aadhaar" className="text-xs font-semibold text-gray-500 mb-1 block">Aadhaar Number *</label>
                         <input
                           type="text" id="aadhaar" name="aadhaar" placeholder="Aadhaar Number"
-                          value={profileData.aadhaar} onChange={handleFieldChange} className="form-input" required maxLength={12}
+                          value={profileData.aadhaar} onChange={handleFieldChange} className={getFieldClassName('aadhaar', 'form-input')} required maxLength={12}
                         />
-                        <label htmlFor="aadhaar" className="form-label">Aadhaar Number *</label>
-                        {validationErrors.aadhaar && <p className="text-red-500 text-[10px] mt-1">{validationErrors.aadhaar}</p>}
+                        {renderValidationMessage('aadhaar')}
                       </div>
                     </div>
                   </div>
@@ -491,45 +634,50 @@ const MyProfile = () => {
                 {activeTab === 'address' && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Address Information</h3>
-                    <div className="form-group">
+                    <div className="space-y-1">
+                      <label htmlFor="permanentAddress" className="text-xs font-semibold text-gray-500 mb-1 block">Permanent Address *</label>
                       <input
                         type="text" id="permanentAddress" name="permanentAddress" placeholder="Permanent Address"
-                        value={profileData.address.permanentAddress} onChange={handleAddressChange} className="form-input" required
+                        value={profileData.address.permanentAddress} onChange={handleAddressChange} className={getFieldClassName('address.permanentAddress', 'form-input')} required
                       />
-                      <label htmlFor="permanentAddress" className="form-label">Permanent Address *</label>
+                      {renderValidationMessage('address.permanentAddress')}
                     </div>
-                    <div className="form-group">
+                    <div className="space-y-1">
+                      <label htmlFor="currentAddress" className="text-xs font-semibold text-gray-500 mb-1 block">Current/Correspondence Address *</label>
                       <input
                         type="text" id="currentAddress" name="currentAddress" placeholder="Current Address"
-                        value={profileData.address.currentAddress} onChange={handleAddressChange} className="form-input" required
+                        value={profileData.address.currentAddress} onChange={handleAddressChange} className={getFieldClassName('address.currentAddress', 'form-input')} required
                       />
-                      <label htmlFor="currentAddress" className="form-label">Current/Correspondence Address *</label>
+                      {renderValidationMessage('address.currentAddress')}
                     </div>
 
                     <div className="grid sm:grid-cols-3 gap-4">
-                      <div>
+                      <div className="space-y-1">
                         <label htmlFor="state" className="text-xs font-semibold text-gray-500 mb-1 block">State *</label>
                         <select
                           id="state" name="state" value={profileData.address.state} onChange={handleAddressChange}
-                          className="form-select" required
+                          className={getFieldClassName('address.state', 'form-select')} required
                         >
                           <option value="">Select State</option>
                           {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                         </select>
+                        {renderValidationMessage('address.state')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="district" className="text-xs font-semibold text-gray-500 mb-1 block">District *</label>
                         <input
                           type="text" id="district" name="district" placeholder="District"
-                          value={profileData.address.district} onChange={handleAddressChange} className="form-input" required
+                          value={profileData.address.district} onChange={handleAddressChange} className={getFieldClassName('address.district', 'form-input')} required
                         />
-                        <label htmlFor="district" className="form-label">District *</label>
+                        {renderValidationMessage('address.district')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="pincode" className="text-xs font-semibold text-gray-500 mb-1 block">Pincode *</label>
                         <input
                           type="text" id="pincode" name="pincode" placeholder="Pincode"
-                          value={profileData.address.pincode} onChange={handleAddressChange} className="form-input" required maxLength={6}
+                          value={profileData.address.pincode} onChange={handleAddressChange} className={getFieldClassName('address.pincode', 'form-input')} required maxLength={6}
                         />
-                        <label htmlFor="pincode" className="form-label">Pincode *</label>
+                        {renderValidationMessage('address.pincode')}
                       </div>
                     </div>
                   </div>
@@ -541,45 +689,48 @@ const MyProfile = () => {
                     <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Academic Profile</h3>
                     
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="collegeName" className="text-xs font-semibold text-gray-500 mb-1 block">College / Institution *</label>
                         <input
                           type="text" id="collegeName" name="collegeName" placeholder="College Name"
-                          value={profileData.collegeName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.collegeName} onChange={handleFieldChange} className={getFieldClassName('collegeName', 'form-input')} required
                         />
-                        <label htmlFor="collegeName" className="form-label">College / Institution *</label>
+                        {renderValidationMessage('collegeName')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="universityName" className="text-xs font-semibold text-gray-500 mb-1 block">Affiliated University *</label>
                         <input
                           type="text" id="universityName" name="universityName" placeholder="University Name"
-                          value={profileData.universityName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.universityName} onChange={handleFieldChange} className={getFieldClassName('universityName', 'form-input')} required
                         />
-                        <label htmlFor="universityName" className="form-label">Affiliated University *</label>
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="degree" className="text-xs font-semibold text-gray-500 mb-1 block">Degree (Course Level) *</label>
                         <input
                           type="text" id="degree" name="degree" placeholder="Degree (e.g. B.Tech / B.Sc)"
-                          value={profileData.degree} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.degree} onChange={handleFieldChange} className={getFieldClassName('degree', 'form-input')} required
                         />
-                        <label htmlFor="degree" className="form-label">Degree (Course Level) *</label>
+                        {renderValidationMessage('degree')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="department" className="text-xs font-semibold text-gray-500 mb-1 block">Branch / Department *</label>
                         <input
                           type="text" id="department" name="department" placeholder="Department"
-                          value={profileData.department} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.department} onChange={handleFieldChange} className={getFieldClassName('department', 'form-input')} required
                         />
-                        <label htmlFor="department" className="form-label">Branch / Department *</label>
+                        {renderValidationMessage('department')}
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-4 gap-4">
-                      <div>
+                      <div className="space-y-1">
                         <label htmlFor="yearOfStudy" className="text-xs font-semibold text-gray-500 mb-1 block">Year *</label>
                         <select
                           id="yearOfStudy" name="yearOfStudy" value={profileData.yearOfStudy} onChange={handleFieldChange}
-                          className="form-select" required
+                          className={getFieldClassName('yearOfStudy', 'form-select')} required
                         >
                           <option value="">Year</option>
                           <option value="1st Year">1st Year</option>
@@ -588,27 +739,31 @@ const MyProfile = () => {
                           <option value="4th Year">4th Year</option>
                           <option value="5th Year">5th Year</option>
                         </select>
+                        {renderValidationMessage('yearOfStudy')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="rollNumber" className="text-xs font-semibold text-gray-500 mb-1 block">Roll/Reg No *</label>
                         <input
                           type="text" id="rollNumber" name="rollNumber" placeholder="Roll Number"
-                          value={profileData.rollNumber} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.rollNumber} onChange={handleFieldChange} className={getFieldClassName('rollNumber', 'form-input')} required
                         />
-                        <label htmlFor="rollNumber" className="form-label">Roll/Reg No *</label>
+                        {renderValidationMessage('rollNumber')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="academicYear" className="text-xs font-semibold text-gray-500 mb-1 block">Acad Year (e.g. 2024-25) *</label>
                         <input
                           type="text" id="academicYear" name="academicYear" placeholder="Academic Year"
-                          value={profileData.academicYear} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.academicYear} onChange={handleFieldChange} className={getFieldClassName('academicYear', 'form-input')} required
                         />
-                        <label htmlFor="academicYear" className="form-label">Acad Year (e.g. 2024-25) *</label>
+                        {renderValidationMessage('academicYear')}
                       </div>
-                      <div className="form-group pt-5">
+                      <div className="space-y-1">
+                        <label htmlFor="cgpa" className="text-xs font-semibold text-gray-500 mb-1 block">CGPA / % *</label>
                         <input
                           type="number" step="0.01" id="cgpa" name="cgpa" placeholder="CGPA / Percentage"
-                          value={profileData.cgpa} onChange={handleFieldChange} className="form-input" required min="0" max="100"
+                          value={profileData.cgpa} onChange={handleFieldChange} className={getFieldClassName('cgpa', 'form-input')} required min="0" max="100"
                         />
-                        <label htmlFor="cgpa" className="form-label">CGPA / % *</label>
+                        {renderValidationMessage('cgpa')}
                       </div>
                     </div>
                   </div>
@@ -619,36 +774,40 @@ const MyProfile = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Family Information</h3>
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="fatherName" className="text-xs font-semibold text-gray-500 mb-1 block">Father's Name *</label>
                         <input
                           type="text" id="fatherName" name="fatherName" placeholder="Father Name"
-                          value={profileData.fatherName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.fatherName} onChange={handleFieldChange} className={getFieldClassName('fatherName', 'form-input')} required
                         />
-                        <label htmlFor="fatherName" className="form-label">Father's Name *</label>
+                        {renderValidationMessage('fatherName')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="motherName" className="text-xs font-semibold text-gray-500 mb-1 block">Mother's Name *</label>
                         <input
                           type="text" id="motherName" name="motherName" placeholder="Mother Name"
-                          value={profileData.motherName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.motherName} onChange={handleFieldChange} className={getFieldClassName('motherName', 'form-input')} required
                         />
-                        <label htmlFor="motherName" className="form-label">Mother's Name *</label>
+                        {renderValidationMessage('motherName')}
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="parentOccupation" className="text-xs font-semibold text-gray-500 mb-1 block">Parent's Occupation *</label>
                         <input
                           type="text" id="parentOccupation" name="parentOccupation" placeholder="Parent Occupation"
-                          value={profileData.parentOccupation} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.parentOccupation} onChange={handleFieldChange} className={getFieldClassName('parentOccupation', 'form-input')} required
                         />
-                        <label htmlFor="parentOccupation" className="form-label">Parent's Occupation *</label>
+                        {renderValidationMessage('parentOccupation')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="familyIncome" className="text-xs font-semibold text-gray-500 mb-1 block">Annual Family Income *</label>
                         <input
                           type="number" id="familyIncome" name="familyIncome" placeholder="Annual Family Income"
-                          value={profileData.familyIncome} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.familyIncome} onChange={handleFieldChange} className={getFieldClassName('familyIncome', 'form-input')} required
                         />
-                        <label htmlFor="familyIncome" className="form-label">Annual Family Income *</label>
+                        {renderValidationMessage('familyIncome')}
                       </div>
                     </div>
                   </div>
@@ -658,46 +817,50 @@ const MyProfile = () => {
                 {activeTab === 'bank' && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Bank Details</h3>
-                    <div className="form-group">
+                    <div className="space-y-1">
+                      <label htmlFor="accountHolderName" className="text-xs font-semibold text-gray-500 mb-1 block">Account Holder Name *</label>
                       <input
                         type="text" id="accountHolderName" name="accountHolderName" placeholder="Account Holder Name"
-                        value={profileData.accountHolderName} onChange={handleFieldChange} className="form-input" required
+                        value={profileData.accountHolderName} onChange={handleFieldChange} className={getFieldClassName('accountHolderName', 'form-input')} required
                       />
-                      <label htmlFor="accountHolderName" className="form-label">Account Holder Name *</label>
+                      {renderValidationMessage('accountHolderName')}
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="bankName" className="text-xs font-semibold text-gray-500 mb-1 block">Bank Name *</label>
                         <input
                           type="text" id="bankName" name="bankName" placeholder="Bank Name"
-                          value={profileData.bankName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.bankName} onChange={handleFieldChange} className={getFieldClassName('bankName', 'form-input')} required
                         />
-                        <label htmlFor="bankName" className="form-label">Bank Name *</label>
+                        {renderValidationMessage('bankName')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="branchName" className="text-xs font-semibold text-gray-500 mb-1 block">Branch Name *</label>
                         <input
                           type="text" id="branchName" name="branchName" placeholder="Branch Name"
-                          value={profileData.branchName} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.branchName} onChange={handleFieldChange} className={getFieldClassName('branchName', 'form-input')} required
                         />
-                        <label htmlFor="branchName" className="form-label">Branch Name *</label>
+                        {renderValidationMessage('branchName')}
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="accountNumber" className="text-xs font-semibold text-gray-500 mb-1 block">Account Number *</label>
                         <input
                           type="text" id="accountNumber" name="accountNumber" placeholder="Account Number"
-                          value={profileData.accountNumber} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.accountNumber} onChange={handleFieldChange} className={getFieldClassName('accountNumber', 'form-input')} required
                         />
-                        <label htmlFor="accountNumber" className="form-label">Account Number *</label>
+                        {renderValidationMessage('accountNumber')}
                       </div>
-                      <div className="form-group">
+                      <div className="space-y-1">
+                        <label htmlFor="ifscCode" className="text-xs font-semibold text-gray-500 mb-1 block">Bank IFSC Code *</label>
                         <input
                           type="text" id="ifscCode" name="ifscCode" placeholder="IFSC Code"
-                          value={profileData.ifscCode} onChange={handleFieldChange} className="form-input" required
+                          value={profileData.ifscCode} onChange={handleFieldChange} className={getFieldClassName('ifscCode', 'form-input')} required
                         />
-                        <label htmlFor="ifscCode" className="form-label">Bank IFSC Code *</label>
-                        {validationErrors.ifscCode && <p className="text-red-500 text-[10px] mt-1">{validationErrors.ifscCode}</p>}
+                        {renderValidationMessage('ifscCode')}
                       </div>
                     </div>
                   </div>
@@ -783,7 +946,7 @@ const MyProfile = () => {
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl border border-gray-100 max-w-md w-full p-6 shadow-card-lg relative animate-slide-up">
-            <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2 text-rose-600">
+            <h3 className="text-lg font-bold text-rose-600 mb-2 flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
               Request Profile Deletion
             </h3>
