@@ -166,7 +166,7 @@ const DocumentUploadCard = ({
             type="file"
             accept={isPhotoField ? 'image/jpeg,image/png' : 'application/pdf'}
             className="hidden"
-            onChange={(e) => handleFile(e.target.files[0])}
+            onChange={handleFileSelect}
           />
         </div>
       )}
