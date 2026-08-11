@@ -41,6 +41,7 @@ const getAllowedOrigins = () => {
   return [...new Set([
     'http://localhost:5173',
     'http://localhost:1024',
+    'https://prime-minister-special-scholarship-portal.onrender.com',
     ...configuredOrigins,
   ])];
 };
