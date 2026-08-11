@@ -4,6 +4,8 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 
+const fs = require('fs');
+
 const connectDB = require('./config/db');
 const User = require('./models/User');
 
@@ -29,14 +31,16 @@ for (const key of requiredEnvKeys) {
 }
 
 const getAllowedOrigins = () => {
-  const configuredOrigins = [process.env.FRONTEND_URL, process.env.CORS_ORIGINS, process.env.CORS_ORIGIN]
+  const configuredOrigins = [process.env.CLIENT_URL, process.env.FRONTEND_URL, process.env.CORS_ORIGINS, process.env.CORS_ORIGIN]
     .filter(Boolean)
     .flatMap((value) => value.split(','))
     .map((value) => value.trim())
+    .map((value) => value.replace(/\/+$/, ''))
     .filter(Boolean);
 
   return [...new Set([
     'http://localhost:5173',
+    'http://localhost:1024',
     ...configuredOrigins,
   ])];
 };
@@ -52,10 +56,12 @@ const corsOptions = {
       return;
     }
 
+    const cleanOrigin = origin.replace(/\/+$/, '');
+
     try {
-      const parsedOrigin = new URL(origin);
+      const parsedOrigin = new URL(cleanOrigin);
       const isLocalhost = parsedOrigin.hostname === 'localhost' || parsedOrigin.hostname === '127.0.0.1';
-      if (allowedOrigins.includes(origin) || isLocalhost) {
+      if (allowedOrigins.includes(cleanOrigin) || isLocalhost) {
         callback(null, true);
         return;
       }
@@ -63,10 +69,13 @@ const corsOptions = {
       // Fall through to the explicit rejection below.
     }
 
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(cleanOrigin)) {
+      callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
+      // In development mode, allow non-configured origins to avoid local blockages
       callback(null, true);
     } else {
-      callback(new Error(`CORS policy blocked: ${origin}`));
+      callback(null, false);
     }
   },
   credentials: true,
@@ -80,6 +89,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve uploaded files
 const uploadsPath = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
 app.use('/uploads', express.static(uploadsPath));
 
 // API Routes
@@ -94,7 +106,14 @@ app.use('/api/public', publicRoutes);
 app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/ai/chatbot', chatbotRoutes);
 
-// Health check
+// Health check endpoints
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'PMSS backend is running',
+  });
+});
+
 app.get('/', (req, res) => {
   const databaseState = require('mongoose').connection?.readyState === 1 ? 'connected' : 'disconnected';
   res.json({
@@ -196,13 +215,34 @@ const seedFaqs = async () => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-connectDB().then(async () => {
-  await seedAdmin();
-  await seedFaqs();
-  app.listen(PORT, () => {
-    console.log(`🚀 PMSS Backend running on http://localhost:${PORT}`);
-  });
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 PMSS Backend running on port ${PORT} (0.0.0.0)`);
 });
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Please close existing process or use a different PORT.`);
+  } else {
+    console.error('❌ Server startup error:', error.message);
+  }
+});
+
+// Asynchronously connect to database and run non-fatal seeds
+connectDB()
+  .then(async (conn) => {
+    if (conn) {
+      try {
+        await seedAdmin();
+        await seedFaqs();
+      } catch (seedErr) {
+        console.warn('Non-fatal seeding warning:', seedErr.message);
+      }
+    }
+  })
+  .catch((dbErr) => {
+    console.error('❌ Database connection error (server remains active):', dbErr.message);
+  });
 
 // Assistant verified write access
 

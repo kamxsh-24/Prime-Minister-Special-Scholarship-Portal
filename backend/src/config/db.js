@@ -6,35 +6,53 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const dns = require('dns');
 
-try {
-  dns.setServers(['1.1.1.1', '8.8.8.8']);
-} catch (dnsErr) {
-  console.warn('Failed to set custom DNS servers, using system default:', dnsErr.message);
+if (process.env.USE_CUSTOM_DNS === 'true') {
+  try {
+    dns.setServers(['1.1.1.1', '8.8.8.8']);
+    console.log('Custom DNS servers set to 1.1.1.1, 8.8.8.8');
+  } catch (dnsErr) {
+    console.warn('Failed to set custom DNS servers, using system default:', dnsErr.message);
+  }
 }
 
 const connectDB = async () => {
   try {
     console.log("Connecting to MongoDB...");
     console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
-    console.log("MONGO_URI first 25 chars:", process.env.MONGO_URI ? process.env.MONGO_URI.slice(0, 25) : '');
-    console.log("MONGO_URI host:", process.env.MONGO_URI ? new URL(process.env.MONGO_URI).host : '');
 
     if (!process.env.MONGO_URI) {
-      throw new Error('MONGO_URI is not defined');
+      throw new Error('MONGO_URI is not defined in environment variables');
     }
 
-    if (!process.env.MONGO_URI.startsWith('mongodb+srv://')) {
-      throw new Error('MONGO_URI must begin with mongodb+srv://');
-    }
+    // Explicit connection options and retry on transient network failures
+    const connectOpts = {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
+    };
 
-    if (
-      process.env.MONGO_URI.includes('mongodb://127.0.0.1') ||
-      process.env.MONGO_URI.includes('mongodb://localhost')
-    ) {
-      throw new Error('MONGO_URI must not contain localhost MongoDB connection strings');
-    }
+    const connectWithRetry = async (retries = 5) => {
+      let attempt = 0;
+      let lastErr = null;
+      while (attempt < retries) {
+        try {
+          const c = await mongoose.connect(process.env.MONGO_URI, connectOpts);
+          return c;
+        } catch (err) {
+          attempt += 1;
+          lastErr = err;
+          console.warn(`Mongo connect attempt ${attempt} failed: ${err.message}`);
+          if (attempt >= retries) break;
+          // exponential backoff
+          await new Promise((r) => setTimeout(r, 2000 * attempt));
+        }
+      }
+      throw lastErr;
+    };
 
-    const conn = await mongoose.connect(process.env.MONGO_URI);
+    const conn = await connectWithRetry(5);
 
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Connected database name: ${conn.connection.name}`);
@@ -287,11 +305,11 @@ const connectDB = async () => {
     return conn;
   } catch (error) {
     console.error("========== MONGODB ERROR ==========");
-    console.error(error);
     console.error("Name:", error.name);
     console.error("Message:", error.message);
     console.error("Stack:", error.stack);
-    process.exit(1);
+    console.error("⚠️ Server will continue running without database connection.");
+    return null;
   }
 };
 

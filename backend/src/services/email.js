@@ -66,11 +66,13 @@ const sendEmail = async ({ to, subject, html }) => {
   }
 };
 
+const getFrontendUrl = () => (process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
 const sendApplicationSubmitted = async (student, applicationId) => {
   await sendEmail({
     to: student.email,
     subject: 'Application Submitted – PMSS Scholarship',
-    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1><p>Prime Minister Special Scholarship Scheme</p></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your scholarship application has been successfully submitted.</p><span class="status-badge submitted">Application Submitted</span><p><strong>Application ID:</strong> ${applicationId}</p><a href="${process.env.FRONTEND_URL}/dashboard/status" class="btn">Track Application</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
+    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1><p>Prime Minister Special Scholarship Scheme</p></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your scholarship application has been successfully submitted.</p><span class="status-badge submitted">Application Submitted</span><p><strong>Application ID:</strong> ${applicationId}</p><a href="${getFrontendUrl()}/dashboard/status" class="btn">Track Application</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
   });
 };
 
@@ -78,7 +80,7 @@ const sendUnderReview = async (student) => {
   await sendEmail({
     to: student.email,
     subject: 'Application Under Review – PMSS Scholarship',
-    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your application is now <strong>Under Review</strong>.</p><span class="status-badge review">Under Review</span><a href="${process.env.FRONTEND_URL}/dashboard/status" class="btn">View Status</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
+    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your application is now <strong>Under Review</strong>.</p><span class="status-badge review">Under Review</span><a href="${getFrontendUrl()}/dashboard/status" class="btn">View Status</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
   });
 };
 
@@ -86,7 +88,7 @@ const sendApproved = async (student) => {
   await sendEmail({
     to: student.email,
     subject: '🎉 Congratulations! Scholarship Approved – PMSS',
-    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your application has been <strong>Approved</strong>!</p><span class="status-badge approved">✓ Approved</span><a href="${process.env.FRONTEND_URL}/dashboard/status" class="btn">Download Approval Letter</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
+    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>Your application has been <strong>Approved</strong>!</p><span class="status-badge approved">✓ Approved</span><a href="${getFrontendUrl()}/dashboard/status" class="btn">Download Approval Letter</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
   });
 };
 
@@ -102,7 +104,7 @@ const sendRevisionRequested = async (student, note) => {
   await sendEmail({
     to: student.email,
     subject: 'Revision Required – PMSS Scholarship Application',
-    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>A revision has been requested for your application.</p>${note ? `<p><strong>Note:</strong> ${note}</p>` : ''}<a href="${process.env.FRONTEND_URL}/dashboard/application" class="btn">Update Application</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
+    html: `<style>${emailStyles}</style><div class="container"><div class="header"><h1>PMSS Scholarship Portal</h1></div><div class="body"><p>Dear <strong>${student.fullName}</strong>,</p><p>A revision has been requested for your application.</p>${note ? `<p><strong>Note:</strong> ${note}</p>` : ''}<a href="${getFrontendUrl()}/dashboard/application" class="btn">Update Application</a></div><div class="footer">Prime Minister Special Scholarship Scheme | Government of India</div></div>`,
   });
 };
 

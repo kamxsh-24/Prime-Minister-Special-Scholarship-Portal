@@ -66,7 +66,8 @@ router.post('/register', async (req, res) => {
     const allowedRoles = ['student', 'institution_officer'];
     const finalRole = allowedRoles.includes(role) ? role : 'student';
 
-    const userExists = await User.findOne({ email: email.toLowerCase() });
+    const cleanEmail = email.trim().toLowerCase();
+    const userExists = await User.findOne({ email: cleanEmail });
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -78,8 +79,8 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-      fullName,
-      email,
+      fullName: fullName.trim(),
+      email: cleanEmail,
       passwordHash,
       phone,
       dateOfBirth,
@@ -164,7 +165,8 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: cleanEmail });
     if (!user) {
       return res.status(401).json({
         success: false,

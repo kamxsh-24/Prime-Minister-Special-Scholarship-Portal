@@ -1,5 +1,8 @@
 const PDFDocument = require('pdfkit');
 
+const getFrontendBaseUrl = () =>
+  (process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+
 /**
  * Draws a simulated QR code on the PDF using vector drawing.
  */
@@ -146,7 +149,8 @@ const generateApprovalLetter = (res, application, student) => {
   const bottomY = doc.y;
 
   // Draw QR code pointing to verify portal
-  const qrUrl = `http://localhost:5173/verify/${application._id}`;
+  const frontendBase = getFrontendBaseUrl();
+  const qrUrl = `${frontendBase}/verify/${application._id}`;
   drawSimulatedQRCode(doc, 60, bottomY, 70, qrUrl);
   doc.fontSize(7).fillColor('#64748b').text('Scan to verify authenticity of this letter', 60, bottomY + 75, { width: 70, align: 'center' });
 
@@ -228,7 +232,8 @@ const generateRejectionLetter = (res, application, student) => {
 
   // Footer / QR Code Signatures Block
   const bottomY = doc.y;
-  const qrUrl = `http://localhost:5173/verify/${application._id}`;
+  const frontendBase = getFrontendBaseUrl();
+  const qrUrl = `${frontendBase}/verify/${application._id}`;
   drawSimulatedQRCode(doc, 60, bottomY, 70, qrUrl);
   doc.fontSize(7).fillColor('#64748b').text('Scan to verify document reference', 60, bottomY + 75, { width: 70, align: 'center' });
 
@@ -307,7 +312,8 @@ const generateRevisionLetter = (res, application, student) => {
 
   // Footer / QR Code Signatures Block
   const bottomY = doc.y;
-  const qrUrl = `http://localhost:5173/verify/${application._id}`;
+  const frontendBase = getFrontendBaseUrl();
+  const qrUrl = `${frontendBase}/verify/${application._id}`;
   drawSimulatedQRCode(doc, 60, bottomY, 70, qrUrl);
   doc.fontSize(7).fillColor('#64748b').text('Scan to verify revision case link', 60, bottomY + 75, { width: 70, align: 'center' });
 

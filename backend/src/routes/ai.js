@@ -5,6 +5,10 @@ const { Anthropic } = require('@anthropic-ai/sdk');
 const router = express.Router();
 
 const callGemini = async (apiKey, systemPrompt, contentsOrMessage) => {
+  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY' || apiKey.trim() === '') {
+    throw new Error('Gemini API key is not configured or is set to placeholder in backend/.env');
+  }
+
   let contents = [];
   if (typeof contentsOrMessage === 'string') {
     contents = [{ parts: [{ text: `System Instruction: ${systemPrompt}\n\nUser Message: ${contentsOrMessage}` }] }];
