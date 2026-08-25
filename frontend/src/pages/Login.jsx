@@ -40,7 +40,13 @@ const Login = () => {
         );
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Login failed. Please try again.';
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        (err.message === 'Network Error'
+          ? 'Unable to connect to server. Please check if the backend server is running.'
+          : err.message) ||
+        'Login failed. Please try again.';
       dispatch(authFailure(msg));
       dispatch(showError(msg));
     }

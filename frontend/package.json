@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "dev": "vite",
     "start": "vite --port 1024",
     "build": "vite build",
     "preview": "vite preview"

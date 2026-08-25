@@ -5,18 +5,20 @@ import { authStart, authSuccess, authFailure } from '../store/slices/authSlice';
 import { showError, showSuccess } from '../store/slices/toastSlice';
 import { registerStudent } from '../services/authService';
 import { GraduationCap, Eye, EyeOff, ArrowRight, ArrowLeft, Loader2, Check } from 'lucide-react';
-
-const STATES = [
-  'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh','Goa','Gujarat','Haryana',
-  'Himachal Pradesh','Jharkhand','Karnataka','Kerala','Madhya Pradesh','Maharashtra','Manipur',
-  'Meghalaya','Mizoram','Nagaland','Odisha','Punjab','Rajasthan','Sikkim','Tamil Nadu','Telangana',
-  'Tripura','Uttar Pradesh','Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh',
-];
+import { getStatesList, getDistrictsForState } from '../utils/indiaStatesDistricts';
 
 const initialForm = {
-  fullName: '', email: '', password: '', confirmPassword: '',
-  phone: '', dateOfBirth: '', state: '', district: '', institution: '',
-  course: '', yearOfStudy: '',
+  fullName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  phone: '',
+  dateOfBirth: '',
+  state: '',
+  district: '',
+  institution: '',
+  course: '',
+  yearOfStudy: '',
 };
 
 const Register = () => {
@@ -27,33 +29,65 @@ const Register = () => {
   const [showPass, setShowPass] = useState(false);
   const [step, setStep] = useState(0); // 0 = account, 1 = personal
 
+  const statesList = getStatesList();
+  const availableDistricts = getDistrictsForState(form.state);
+
+  const passwordCriteria = [
+    { label: 'Minimum 8 characters', valid: form.password.length >= 8 },
+    { label: 'One uppercase letter', valid: /[A-Z]/.test(form.password) },
+    { label: 'One lowercase letter', valid: /[a-z]/.test(form.password) },
+    { label: 'One number', valid: /[0-9]/.test(form.password) },
+    { label: 'One special character', valid: /[^A-Za-z0-9]/.test(form.password) },
+  ];
+
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleStateChange = (e) => {
+    const selectedState = e.target.value;
+    setForm((prev) => ({
+      ...prev,
+      state: selectedState,
+      district: '', // Reset district when state changes
+    }));
+  };
 
   const validateStep0 = () => {
     if (!form.fullName.trim()) return 'Full name is required.';
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      return 'Valid email is required.';
-    if (form.password.length < 8) return 'Password must be at least 8 characters.';
+      return 'Valid email address is required.';
+    if (form.password.length < 8) return 'Password must be at least 8 characters long.';
+    if (!/[A-Z]/.test(form.password)) return 'Password must contain at least one uppercase letter.';
+    if (!/[a-z]/.test(form.password)) return 'Password must contain at least one lowercase letter.';
+    if (!/[0-9]/.test(form.password)) return 'Password must contain at least one number.';
+    if (!/[^A-Za-z0-9]/.test(form.password)) return 'Password must contain at least one special character.';
     if (form.password !== form.confirmPassword) return 'Passwords do not match.';
     return null;
   };
 
   const validateStep1 = () => {
-    if (form.phone && !/^\d{10}$/.test(form.phone)) return 'Phone must be exactly 10 digits.';
+    if (!form.state) return 'Please select your State.';
+    if (!form.district) return 'Please select your District.';
+    if (form.phone && !/^\d{10}$/.test(form.phone)) return 'Phone number must be exactly 10 digits.';
     return null;
   };
 
   const handleNext = () => {
     const err = validateStep0();
-    if (err) { dispatch(showError(err)); return; }
+    if (err) {
+      dispatch(showError(err));
+      return;
+    }
     setStep(1);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validateStep1();
-    if (err) { dispatch(showError(err)); return; }
+    if (err) {
+      dispatch(showError(err));
+      return;
+    }
 
     dispatch(authStart());
     try {
@@ -65,7 +99,13 @@ const Register = () => {
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed.';
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        (err.message === 'Network Error'
+          ? 'Unable to connect to server. Please check if the backend server is running.'
+          : err.message) ||
+        'Registration failed. Please try again.';
       dispatch(authFailure(msg));
       dispatch(showError(msg));
     }
@@ -90,15 +130,29 @@ const Register = () => {
           <div className="flex items-center justify-center gap-2 mb-6">
             {['Account Info', 'Personal Info'].map((label, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
-                  i < step ? 'bg-primary border-primary text-white'
-                  : i === step ? 'border-primary text-primary'
-                  : 'border-gray-200 text-gray-400'
-                }`}>
+                <div
+                  className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
+                    i < step
+                      ? 'bg-primary border-primary text-white'
+                      : i === step
+                      ? 'border-primary text-primary'
+                      : 'border-gray-200 text-gray-400'
+                  }`}
+                >
                   {i < step ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
                 </div>
-                <span className={`text-xs font-medium ${i === step ? 'text-primary' : 'text-gray-400'}`}>{label}</span>
-                {i < 1 && <div className={`h-0.5 w-8 ${i < step ? 'bg-primary' : 'bg-gray-200'}`} />}
+                <span
+                  className={`text-xs font-medium ${
+                    i === step ? 'text-primary' : 'text-gray-400'
+                  }`}
+                >
+                  {label}
+                </span>
+                {i < 1 && (
+                  <div
+                    className={`h-0.5 w-8 ${i < step ? 'bg-primary' : 'bg-gray-200'}`}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -107,40 +161,127 @@ const Register = () => {
             <form onSubmit={handleSubmit} noValidate>
               {step === 0 && (
                 <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-sm font-semibold text-gray-700 mb-4">Account Credentials</h2>
+                  <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                    Account Credentials
+                  </h2>
 
                   <div className="form-group">
-                    <input type="text" id="reg-fullname" name="fullName" placeholder="Full Name"
-                      value={form.fullName} onChange={handleChange} className="form-input" required />
-                    <label htmlFor="reg-fullname" className="form-label">Full Name *</label>
+                    <input
+                      type="text"
+                      id="reg-fullname"
+                      name="fullName"
+                      placeholder="Full Name"
+                      value={form.fullName}
+                      onChange={handleChange}
+                      className="form-input"
+                      required
+                    />
+                    <label htmlFor="reg-fullname" className="form-label">
+                      Full Name *
+                    </label>
                   </div>
 
                   <div className="form-group">
-                    <input type="email" id="reg-email" name="email" placeholder="Email Address"
-                      value={form.email} onChange={handleChange} className="form-input" required />
-                    <label htmlFor="reg-email" className="form-label">Email Address *</label>
+                    <input
+                      type="email"
+                      id="reg-email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={form.email}
+                      onChange={handleChange}
+                      className="form-input"
+                      required
+                    />
+                    <label htmlFor="reg-email" className="form-label">
+                      Email Address *
+                    </label>
                   </div>
 
                   <div className="form-group">
-                    <input type={showPass ? 'text' : 'password'} id="reg-password" name="password"
-                      placeholder="Password" value={form.password} onChange={handleChange}
-                      className="form-input pr-12" required />
-                    <label htmlFor="reg-password" className="form-label">Password (min 8 chars) *</label>
-                    <button type="button" onClick={() => setShowPass(p => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      id="reg-password"
+                      name="password"
+                      placeholder="Password"
+                      value={form.password}
+                      onChange={handleChange}
+                      className="form-input pr-12"
+                      required
+                    />
+                    <label htmlFor="reg-password" className="form-label">
+                      Password *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPass((p) => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                    >
                       {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
 
-                  <div className="form-group">
-                    <input type={showPass ? 'text' : 'password'} id="reg-confirm" name="confirmPassword"
-                      placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange}
-                      className="form-input" required />
-                    <label htmlFor="reg-confirm" className="form-label">Confirm Password *</label>
+                  {/* Password requirements visual indicator */}
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs space-y-1 mt-1">
+                    <p className="font-semibold text-gray-700 mb-1.5">
+                      Password must contain:
+                    </p>
+                    <div className="space-y-1">
+                      {passwordCriteria.map((c, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          {c.valid ? (
+                            <Check
+                              className="h-3.5 w-3.5 text-emerald-600 font-bold"
+                              strokeWidth={3}
+                            />
+                          ) : (
+                            <span className="h-3.5 w-3.5 flex items-center justify-center text-red-500 font-bold text-[10px]">
+                              ✕
+                            </span>
+                          )}
+                          <span
+                            className={
+                              c.valid ? 'text-emerald-700 font-medium' : 'text-gray-500'
+                            }
+                          >
+                            {c.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  <button type="button" onClick={handleNext}
-                    className="btn-primary w-full py-3 text-base mt-2">
+                  <div className="form-group">
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      id="reg-confirm"
+                      name="confirmPassword"
+                      placeholder="Confirm Password"
+                      value={form.confirmPassword}
+                      onChange={handleChange}
+                      className={`form-input ${
+                        form.confirmPassword && form.password !== form.confirmPassword
+                          ? 'border-red-500 focus:border-red-500'
+                          : ''
+                      }`}
+                      required
+                    />
+                    <label htmlFor="reg-confirm" className="form-label">
+                      Confirm Password *
+                    </label>
+                    {form.confirmPassword && form.password !== form.confirmPassword && (
+                      <p className="text-xs text-red-600 mt-1 font-medium flex items-center gap-1">
+                        <span>⚠️</span> Passwords do not match
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    id="reg-button"
+                    name="register-button"
+                    className="btn-primary w-full py-3 text-base mt-2"
+                  >
                     Next Step <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
@@ -148,65 +289,179 @@ const Register = () => {
 
               {step === 1 && (
                 <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-sm font-semibold text-gray-700 mb-4">Personal & Academic Details</h2>
+                  <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                    Personal & Academic Details
+                  </h2>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-group">
-                      <input type="tel" id="reg-phone" name="phone" placeholder="Phone Number"
-                        value={form.phone} onChange={handleChange} className="form-input" maxLength={10} />
-                      <label htmlFor="reg-phone" className="form-label">Phone (10 digits)</label>
+                      <input
+                        type="tel"
+                        id="reg-phone"
+                        name="phone"
+                        placeholder="Phone Number"
+                        value={form.phone}
+                        onChange={handleChange}
+                        className="form-input"
+                        maxLength={10}
+                      />
+                      <label htmlFor="reg-phone" className="form-label">
+                        Phone (10 digits)
+                      </label>
                     </div>
                     <div className="form-group">
-                      <input type="date" id="reg-dob" name="dateOfBirth" placeholder="Date of Birth"
-                        value={form.dateOfBirth} onChange={handleChange} className="form-input" />
-                      <label htmlFor="reg-dob" className="form-label">Date of Birth</label>
+                      <input
+                        type="date"
+                        id="reg-dob"
+                        name="dateOfBirth"
+                        placeholder="Date of Birth"
+                        value={form.dateOfBirth}
+                        onChange={handleChange}
+                        className="form-input"
+                      />
+                      <label htmlFor="reg-dob" className="form-label">
+                        Date of Birth
+                      </label>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="reg-state" className="text-xs font-medium text-gray-600 mb-1 block">State</label>
-                      <select id="reg-state" name="state" value={form.state} onChange={handleChange} className="form-select">
+                      <label
+                        htmlFor="reg-state"
+                        className="text-xs font-medium text-gray-600 mb-1 block"
+                      >
+                        State *
+                      </label>
+                      <select
+                        id="reg-state"
+                        name="state"
+                        value={form.state}
+                        onChange={handleStateChange}
+                        className="form-select w-full"
+                        required
+                      >
                         <option value="">Select State</option>
-                        {STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                        {statesList.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
                       </select>
                     </div>
-                    <div className="form-group">
-                      <input type="text" id="reg-district" name="district" placeholder="District"
-                        value={form.district} onChange={handleChange} className="form-input" />
-                      <label htmlFor="reg-district" className="form-label">District</label>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <input type="text" id="reg-institution" name="institution" placeholder="Institution Name"
-                      value={form.institution} onChange={handleChange} className="form-input" />
-                    <label htmlFor="reg-institution" className="form-label">Institution Name</label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="form-group">
-                      <input type="text" id="reg-course" name="course" placeholder="Course Name"
-                        value={form.course} onChange={handleChange} className="form-input" />
-                      <label htmlFor="reg-course" className="form-label">Course Name</label>
-                    </div>
                     <div>
-                      <label htmlFor="reg-year" className="text-xs font-medium text-gray-600 mb-1 block">Year of Study</label>
-                      <select id="reg-year" name="yearOfStudy" value={form.yearOfStudy} onChange={handleChange} className="form-select">
-                        <option value="">Select Year</option>
-                        {['1st Year','2nd Year','3rd Year','4th Year','5th Year'].map(y =>
-                          <option key={y} value={y}>{y}</option>
+                      <label
+                        htmlFor="reg-district"
+                        className="text-xs font-medium text-gray-600 mb-1 block"
+                      >
+                        District *
+                      </label>
+                      <select
+                        id="reg-district"
+                        name="district"
+                        value={form.district}
+                        onChange={handleChange}
+                        disabled={!form.state}
+                        className={`form-select w-full transition-colors ${
+                          !form.state
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                            : ''
+                        }`}
+                        required
+                      >
+                        {!form.state ? (
+                          <option value="">Select State First</option>
+                        ) : (
+                          <>
+                            <option value="">Select District</option>
+                            {availableDistricts.map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
+                            ))}
+                          </>
                         )}
                       </select>
                     </div>
                   </div>
 
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      id="reg-institution"
+                      name="institution"
+                      placeholder="Institution Name"
+                      value={form.institution}
+                      onChange={handleChange}
+                      className="form-input"
+                    />
+                    <label htmlFor="reg-institution" className="form-label">
+                      Institution Name
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        id="reg-course"
+                        name="course"
+                        placeholder="Course Name"
+                        value={form.course}
+                        onChange={handleChange}
+                        className="form-input"
+                      />
+                      <label htmlFor="reg-course" className="form-label">
+                        Course Name
+                      </label>
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="reg-year"
+                        className="text-xs font-medium text-gray-600 mb-1 block"
+                      >
+                        Year of Study
+                      </label>
+                      <select
+                        id="reg-year"
+                        name="yearOfStudy"
+                        value={form.yearOfStudy}
+                        onChange={handleChange}
+                        className="form-select w-full"
+                      >
+                        <option value="">Select Year</option>
+                        {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'].map((y) => (
+                          <option key={y} value={y}>
+                            {y}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div className="flex gap-3 mt-2">
-                    <button type="button" onClick={() => setStep(0)} className="btn-secondary flex-1 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep(0)}
+                      className="btn-secondary flex-1 py-3"
+                    >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
-                    <button type="submit" id="register-btn" disabled={loading} className="btn-primary flex-1 py-3 text-base">
-                      {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Registering...</> : <>Register <ArrowRight className="h-4 w-4" /></>}
+                    <button
+                      type="submit"
+                      id="register-btn"
+                      disabled={loading}
+                      className="btn-primary flex-1 py-3 text-base"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" /> Registering...
+                        </>
+                      ) : (
+                        <>
+                          Register <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -215,7 +470,9 @@ const Register = () => {
 
             <p className="text-center text-sm text-gray-500 mt-5">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary font-semibold hover:underline">Sign In</Link>
+              <Link to="/login" className="text-primary font-semibold hover:underline">
+                Sign In
+              </Link>
             </p>
           </div>
         </div>

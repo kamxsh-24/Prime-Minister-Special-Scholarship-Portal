@@ -21,6 +21,16 @@ const generateRefreshToken = (user) =>
   );
 
 const AuditLog = require('../models/AuditLog');
+const { isValidState, isValidDistrictForState } = require('../utils/indiaStatesDistricts');
+
+const isStrongPassword = (pwd) => {
+  if (!pwd || pwd.length < 8) return false;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /[0-9]/.test(pwd);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+  return hasUpper && hasLower && hasNumber && hasSpecial;
+};
 
 // @route   POST /api/auth/register
 // @desc    Register a new user (student or institution officer)
@@ -49,10 +59,24 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    if (password.length < 8) {
+    if (!isStrongPassword(password)) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 8 characters long.',
+        message: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+      });
+    }
+
+    if (!state || !state.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'State is required.',
+      });
+    }
+
+    if (!district || !district.trim() || !isValidDistrictForState(state, district)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selected district does not belong to the selected state.',
       });
     }
 
