@@ -56,8 +56,8 @@ const AdminDashboard = () => {
         { title: 'Total Applications', value: stats.total,       icon: FileText,    iconBg: 'bg-blue-50 text-blue-600',   iconColor: 'text-blue-600'   },
         { title: 'Pending Review',     value: stats.pending,     icon: Clock,       iconBg: 'bg-amber-50 text-amber-600',  iconColor: 'text-amber-600'  },
         { title: 'College Verified',   value: stats.institutionVerified || 0, icon: ShieldCheck, iconBg: 'bg-indigo-50 text-indigo-600', iconColor: 'text-indigo-600' },
-        { title: 'Approved',           value: stats.approved,    icon: CheckCircle, iconBg: 'bg-emerald-50 text-emerald-600',  iconColor: 'text-emerald-600'  },
-        { title: 'Disbursed Funds',    value: stats.disbursed || 0, icon: ShieldCheck, iconBg: 'bg-green-50 text-green-600', iconColor: 'text-green-600' },
+        { title: 'Approved',           value: stats.approved,    icon: CheckCircle, iconBg: 'bg-[#F0FDF4] dark:bg-[#0B2E1B] text-[#15803D] dark:text-[#4ADE80]',  iconColor: 'text-[#22C55E] dark:text-[#4ADE80]'  },
+        { title: 'Disbursed Funds',    value: stats.disbursed || 0, icon: ShieldCheck, iconBg: 'bg-[#F0FDF4] dark:bg-[#0B2E1B] text-[#15803D] dark:text-[#4ADE80]', iconColor: 'text-[#22C55E] dark:text-[#4ADE80]' },
         { title: 'Total Students',     value: stats.totalStudents, icon: Users,     iconBg: 'bg-purple-50 text-purple-600', iconColor: 'text-purple-600' },
       ]
     : [];

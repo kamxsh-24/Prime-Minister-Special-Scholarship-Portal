@@ -49,20 +49,20 @@ const initialDocs = {
 const PROFILE_CACHE_KEY = 'pmsss-profile-cache';
 
 const FloatInput = ({ id, name, label, value, onChange, type = 'text', required, maxLength, disabled }) => (
-  <div className="form-group">
+  <div>
+    <label htmlFor={id} className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">{label}{required ? ' *' : ''}</label>
     <input
       type={type} id={id} name={name} placeholder={label}
-      value={value} onChange={onChange} className="form-input"
+      value={value} onChange={onChange} className="form-input disabled:bg-gray-100 dark:disabled:bg-[#1E1E1E] disabled:text-gray-500 dark:disabled:text-[#BDBDBD] disabled:border-gray-200 dark:disabled:border-[#333333]"
       required={required} maxLength={maxLength} disabled={disabled}
     />
-    <label htmlFor={id} className="form-label">{label}{required ? ' *' : ''}</label>
   </div>
 );
 
 const SelectField = ({ id, name, label, value, onChange, options, required, disabled }) => (
   <div>
-    <label htmlFor={id} className="text-xs font-medium text-gray-600 mb-1 block">{label}{required ? ' *' : ''}</label>
-    <select id={id} name={name} value={value} onChange={onChange} className="form-select" disabled={disabled}>
+    <label htmlFor={id} className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">{label}{required ? ' *' : ''}</label>
+    <select id={id} name={name} value={value} onChange={onChange} className="form-select w-full disabled:bg-gray-100 dark:disabled:bg-[#1E1E1E] disabled:text-gray-500 dark:disabled:text-[#BDBDBD]" disabled={disabled}>
       <option value="">Select {label}</option>
       {options.map((o) => (
         <option key={o.value || o} value={o.value || o}>{o.label || o}</option>
@@ -836,7 +836,7 @@ const ScholarshipApplicationForm = () => {
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow disabled:opacity-50"
+                  className="px-6 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow disabled:opacity-50"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   {t('submit')}
@@ -866,25 +866,25 @@ const ScholarshipApplicationForm = () => {
             <div className="pt-2 text-[10px] space-y-1.5 text-slate-500 font-medium">
               <div className="flex justify-between">
                 <span>Personal Fields:</span>
-                <span className={personal.fullName && personal.category && personal.state ? 'text-green-600 font-bold' : ''}>
+                <span className={personal.fullName && personal.category && personal.state ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
                   {personal.fullName && personal.category && personal.state ? '✓ Done' : 'Pending'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Academic Fields:</span>
-                <span className={academic.institutionName && academic.courseName && academic.previousYearMarks ? 'text-green-600 font-bold' : ''}>
+                <span className={academic.institutionName && academic.courseName && academic.previousYearMarks ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
                   {academic.institutionName && academic.courseName && academic.previousYearMarks ? '✓ Done' : 'Pending'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Bank Details:</span>
-                <span className={bank.accountNumber && bank.ifscCode ? 'text-green-600 font-bold' : ''}>
+                <span className={bank.accountNumber && bank.ifscCode ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
                   {bank.accountNumber && bank.ifscCode ? '✓ Seeded' : 'Pending'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Uploaded Certificates:</span>
-                <span className={docs.marksheet || application?.documents?.marksheet ? 'text-green-600 font-bold' : ''}>
+                <span className={docs.marksheet || application?.documents?.marksheet ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
                   {docs.marksheet || application?.documents?.marksheet ? '✓ Uploaded' : 'Missing'}
                 </span>
               </div>
@@ -900,13 +900,13 @@ const ScholarshipApplicationForm = () => {
 
             {/* Overall Status Banner */}
             <div className={`p-3.5 rounded-2xl flex items-center gap-2.5 ${
-              eligibility.status === 'Eligible' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' :
+              eligibility.status === 'Eligible' ? 'bg-[#F0FDF4] dark:bg-[#0B2E1B] text-[#15803D] dark:text-[#4ADE80] border border-[#86EFAC] dark:border-[#166534]' :
               eligibility.status === 'Probably Eligible' ? 'bg-orange-50 text-orange-800 border border-orange-100' :
               eligibility.status === 'Not Eligible' ? 'bg-red-50 text-red-800 border border-red-100' :
               'bg-slate-50 text-slate-600 border'
             }`}>
               {eligibility.status === 'Eligible' || eligibility.status === 'Probably Eligible' ? (
-                <CheckCircle2 className={`w-5 h-5 shrink-0 ${eligibility.status === 'Eligible' ? 'text-emerald-600' : 'text-orange-500'}`} />
+                <CheckCircle2 className={`w-5 h-5 shrink-0 ${eligibility.status === 'Eligible' ? 'text-[#22C55E] dark:text-[#4ADE80]' : 'text-orange-500'}`} />
               ) : eligibility.status === 'Not Eligible' ? (
                 <XCircle className="w-5 h-5 shrink-0 text-red-600" />
               ) : (
@@ -924,7 +924,7 @@ const ScholarshipApplicationForm = () => {
                 <span className="text-slate-500">Annual Income limit:</span>
                 {personal.annualIncome ? (
                   Number(personal.annualIncome) <= 800000 ? (
-                    <span className="text-green-600 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> ₹{Number(personal.annualIncome).toLocaleString()}</span>
+                    <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> ₹{Number(personal.annualIncome).toLocaleString()}</span>
                   ) : (
                     <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Exceeded</span>
                   )
@@ -937,7 +937,7 @@ const ScholarshipApplicationForm = () => {
                 <span className="text-slate-500">Qualifying Marks (50%):</span>
                 {academic.previousYearMarks ? (
                   Number(academic.previousYearMarks) >= 50 ? (
-                    <span className="text-green-600 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {academic.previousYearMarks}%</span>
+                    <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {academic.previousYearMarks}%</span>
                   ) : (
                     <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Failed Cutoff</span>
                   )
@@ -949,7 +949,7 @@ const ScholarshipApplicationForm = () => {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Aadhaar Filled:</span>
                 {personal.aadhaarNumber && personal.aadhaarNumber.length === 12 ? (
-                  <span className="text-green-600 font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Yes</span>
+                  <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Yes</span>
                 ) : (
                   <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Incomplete</span>
                 )}

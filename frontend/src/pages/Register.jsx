@@ -4,7 +4,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { authStart, authSuccess, authFailure } from '../store/slices/authSlice';
 import { showError, showSuccess } from '../store/slices/toastSlice';
 import { registerStudent } from '../services/authService';
-import { GraduationCap, Eye, EyeOff, ArrowRight, ArrowLeft, Loader2, Check } from 'lucide-react';
+import Navbar from '../components/layout/Navbar';
+import { GraduationCap, Eye, EyeOff, ArrowRight, ArrowLeft, Loader2, Check, ShieldCheck } from 'lucide-react';
 import { getStatesList, getDistrictsForState } from '../utils/indiaStatesDistricts';
 
 const initialForm = {
@@ -95,7 +96,7 @@ const Register = () => {
       const res = await registerStudent(payload);
       if (res.data.success) {
         dispatch(authSuccess(res.data.data));
-        dispatch(showSuccess('Registration successful! Welcome to PMSS.'));
+        dispatch(showSuccess('Registration successful! Welcome to PMSSS.'));
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {
@@ -111,370 +112,377 @@ const Register = () => {
     }
   };
 
+  const stepperItems = [
+    { num: '01', title: 'Account Details' },
+    { num: '02', title: 'Personal Information' },
+    { num: '03', title: 'Review & Submit' },
+  ];
+
   return (
-    <div className="min-h-screen bg-surface-50 flex flex-col">
-      <div className="gov-banner" />
+    <div className="min-h-screen bg-[#FFFFFF] dark:bg-[#000000] text-[#0B2545] dark:text-white flex flex-col transition-colors duration-200">
+      <Navbar />
 
-      <div className="flex flex-1 items-center justify-center px-4 py-10">
-        <div className="w-full max-w-lg">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex h-14 w-14 items-center justify-center bg-primary rounded-2xl shadow-primary mb-4">
-              <GraduationCap className="h-7 w-7 text-white" />
+      <div className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 sm:py-12">
+        {/* Top Stepper Banner matching reference design */}
+        <div className="bg-white dark:bg-[#121212] p-6 mb-8 border border-[#D9E2EC] dark:border-[#333333] rounded-2xl shadow-xs">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {stepperItems.map((item, idx) => {
+              const active = step === idx;
+              const completed = step > idx;
+              return (
+                <React.Fragment key={idx}>
+                  <div className="flex flex-col items-center text-center group">
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all ${
+                        completed
+                          ? 'bg-[#0D6EFD] border-[#0D6EFD] text-white dark:bg-[#4FC3F7] dark:border-[#4FC3F7] dark:text-black'
+                          : active
+                          ? 'border-[#0D6EFD] text-[#0D6EFD] dark:border-[#4FC3F7] dark:text-[#4FC3F7] bg-blue-50 dark:bg-[#161616]'
+                          : 'border-gray-300 dark:border-[#333333] text-gray-400 dark:text-[#BDBDBD]'
+                      }`}
+                    >
+                      {completed ? <Check className="h-5 w-5" strokeWidth={3} /> : item.num}
+                    </div>
+                    <span
+                      className={`text-xs font-semibold mt-2 hidden sm:block ${
+                        active || completed ? 'text-[#0B2545] dark:text-white' : 'text-gray-400 dark:text-[#BDBDBD]'
+                      }`}
+                    >
+                      {item.title}
+                    </span>
+                  </div>
+                  {idx < stepperItems.length - 1 && (
+                    <div
+                      className={`flex-1 h-0.5 mx-3 transition-all ${
+                        completed ? 'bg-[#0D6EFD] dark:bg-[#4FC3F7]' : 'bg-[#D9E2EC] dark:bg-[#333333]'
+                      }`}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
+
+        {/* Form Main Card */}
+        <div className="card p-6 sm:p-10 border border-gray-200 dark:border-[#333333] shadow-card">
+          <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100 dark:border-[#333333]">
+            <div>
+              <h1 className="text-2xl font-extrabold text-[#0B1F3A] dark:text-white font-display">
+                {step === 0 ? '01 Account Credentials' : '02 Personal Information'}
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-[#BDBDBD] mt-1">
+                {step === 0 ? 'Create your PMSSS account login credentials' : 'Provide your personal and educational background'}
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
-            <p className="text-gray-500 text-sm mt-1">Apply for PMSS Scholarship</p>
+            <div className="text-right text-xs text-gray-400 dark:text-[#BDBDBD]">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 dark:text-[#4FC3F7] font-bold hover:underline">
+                Login
+              </Link>
+            </div>
           </div>
 
-          {/* Step indicators */}
-          <div className="flex items-center justify-center gap-2 mb-6">
-            {['Account Info', 'Personal Info'].map((label, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div
-                  className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${
-                    i < step
-                      ? 'bg-primary border-primary text-white'
-                      : i === step
-                      ? 'border-primary text-primary'
-                      : 'border-gray-200 text-gray-400'
-                  }`}
-                >
-                  {i < step ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
-                </div>
-                <span
-                  className={`text-xs font-medium ${
-                    i === step ? 'text-primary' : 'text-gray-400'
-                  }`}
-                >
-                  {label}
-                </span>
-                {i < 1 && (
-                  <div
-                    className={`h-0.5 w-8 ${i < step ? 'bg-primary' : 'bg-gray-200'}`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="card p-8 shadow-card-md">
-            <form onSubmit={handleSubmit} noValidate>
-              {step === 0 && (
-                <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-sm font-semibold text-gray-700 mb-4">
-                    Account Credentials
-                  </h2>
-
-                  <div className="form-group">
+          <form onSubmit={handleSubmit} noValidate>
+            {step === 0 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Full Name */}
+                  <div>
+                    <label htmlFor="reg-fullname" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
                       id="reg-fullname"
                       name="fullName"
-                      placeholder="Full Name"
+                      placeholder="Enter full name"
                       value={form.fullName}
                       onChange={handleChange}
                       className="form-input"
                       required
                     />
-                    <label htmlFor="reg-fullname" className="form-label">
-                      Full Name *
-                    </label>
                   </div>
 
-                  <div className="form-group">
+                  {/* Email */}
+                  <div>
+                    <label htmlFor="reg-email" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Email Address *
+                    </label>
                     <input
                       type="email"
                       id="reg-email"
                       name="email"
-                      placeholder="Email Address"
+                      placeholder="Enter email address"
                       value={form.email}
                       onChange={handleChange}
                       className="form-input"
                       required
                     />
-                    <label htmlFor="reg-email" className="form-label">
-                      Email Address *
-                    </label>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      id="reg-password"
-                      name="password"
-                      placeholder="Password"
-                      value={form.password}
-                      onChange={handleChange}
-                      className="form-input pr-12"
-                      required
-                    />
-                    <label htmlFor="reg-password" className="form-label">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Password */}
+                  <div>
+                    <label htmlFor="reg-password" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
                       Password *
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowPass((p) => !p)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-
-                  {/* Password requirements visual indicator */}
-                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200 text-xs space-y-1 mt-1">
-                    <p className="font-semibold text-gray-700 mb-1.5">
-                      Password must contain:
-                    </p>
-                    <div className="space-y-1">
-                      {passwordCriteria.map((c, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          {c.valid ? (
-                            <Check
-                              className="h-3.5 w-3.5 text-emerald-600 font-bold"
-                              strokeWidth={3}
-                            />
-                          ) : (
-                            <span className="h-3.5 w-3.5 flex items-center justify-center text-red-500 font-bold text-[10px]">
-                              ✕
-                            </span>
-                          )}
-                          <span
-                            className={
-                              c.valid ? 'text-emerald-700 font-medium' : 'text-gray-500'
-                            }
-                          >
-                            {c.label}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="relative">
+                      <input
+                        type={showPass ? 'text' : 'password'}
+                        id="reg-password"
+                        name="password"
+                        placeholder="Create password"
+                        value={form.password}
+                        onChange={handleChange}
+                        className="form-input pr-12"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPass((p) => !p)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white p-1"
+                      >
+                        {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
                   </div>
 
-                  <div className="form-group">
+                  {/* Confirm Password */}
+                  <div>
+                    <label htmlFor="reg-confirm" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Confirm Password *
+                    </label>
                     <input
                       type={showPass ? 'text' : 'password'}
                       id="reg-confirm"
                       name="confirmPassword"
-                      placeholder="Confirm Password"
+                      placeholder="Confirm password"
                       value={form.confirmPassword}
                       onChange={handleChange}
                       className={`form-input ${
                         form.confirmPassword && form.password !== form.confirmPassword
-                          ? 'border-red-500 focus:border-red-500'
+                          ? 'border-red-500 dark:border-red-500 focus:border-red-500'
                           : ''
                       }`}
                       required
                     />
-                    <label htmlFor="reg-confirm" className="form-label">
-                      Confirm Password *
-                    </label>
                     {form.confirmPassword && form.password !== form.confirmPassword && (
-                      <p className="text-xs text-red-600 mt-1 font-medium flex items-center gap-1">
-                        <span>⚠️</span> Passwords do not match
+                      <p className="text-xs text-red-600 dark:text-[#EF5350] mt-1.5 font-semibold">
+                        Passwords do not match
                       </p>
                     )}
                   </div>
+                </div>
 
+                {/* Password requirement panel matching reference design */}
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#161616] border border-gray-200 dark:border-[#333333] text-xs">
+                  <p className="font-bold text-[#0B1F3A] dark:text-white mb-2.5">Password must contain:</p>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {passwordCriteria.map((c, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        {c.valid ? (
+                          <Check className="h-4 w-4 text-emerald-600 dark:text-[#81C784] font-bold" strokeWidth={3} />
+                        ) : (
+                          <span className="h-4 w-4 flex items-center justify-center text-gray-400 dark:text-[#BDBDBD] font-bold text-[11px]">○</span>
+                        )}
+                        <span className={`font-medium ${c.valid ? 'text-emerald-700 dark:text-[#81C784]' : 'text-gray-500 dark:text-[#BDBDBD]'}`}>
+                          {c.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
                   <button
                     type="button"
                     onClick={handleNext}
                     id="reg-button"
                     name="register-button"
-                    className="btn-primary w-full py-3 text-base mt-2"
+                    className="btn-primary px-8 py-3 text-base"
                   >
-                    Next Step <ArrowRight className="h-4 w-4" />
+                    Save & Continue <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              {step === 1 && (
-                <div className="space-y-4 animate-fade-in">
-                  <h2 className="text-sm font-semibold text-gray-700 mb-4">
-                    Personal & Academic Details
-                  </h2>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="form-group">
-                      <input
-                        type="tel"
-                        id="reg-phone"
-                        name="phone"
-                        placeholder="Phone Number"
-                        value={form.phone}
-                        onChange={handleChange}
-                        className="form-input"
-                        maxLength={10}
-                      />
-                      <label htmlFor="reg-phone" className="form-label">
-                        Phone (10 digits)
-                      </label>
-                    </div>
-                    <div className="form-group">
-                      <input
-                        type="date"
-                        id="reg-dob"
-                        name="dateOfBirth"
-                        placeholder="Date of Birth"
-                        value={form.dateOfBirth}
-                        onChange={handleChange}
-                        className="form-input"
-                      />
-                      <label htmlFor="reg-dob" className="form-label">
-                        Date of Birth
-                      </label>
-                    </div>
+            {step === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Phone */}
+                  <div>
+                    <label htmlFor="reg-phone" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      id="reg-phone"
+                      name="phone"
+                      placeholder="Enter 10-digit number"
+                      value={form.phone}
+                      onChange={handleChange}
+                      className="form-input"
+                      maxLength={10}
+                    />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label
-                        htmlFor="reg-state"
-                        className="text-xs font-medium text-gray-600 mb-1 block"
-                      >
-                        State *
-                      </label>
-                      <select
-                        id="reg-state"
-                        name="state"
-                        value={form.state}
-                        onChange={handleStateChange}
-                        className="form-select w-full"
-                        required
-                      >
-                        <option value="">Select State</option>
-                        {statesList.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="reg-district"
-                        className="text-xs font-medium text-gray-600 mb-1 block"
-                      >
-                        District *
-                      </label>
-                      <select
-                        id="reg-district"
-                        name="district"
-                        value={form.district}
-                        onChange={handleChange}
-                        disabled={!form.state}
-                        className={`form-select w-full transition-colors ${
-                          !form.state
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
-                            : ''
-                        }`}
-                        required
-                      >
-                        {!form.state ? (
-                          <option value="">Select State First</option>
-                        ) : (
-                          <>
-                            <option value="">Select District</option>
-                            {availableDistricts.map((d) => (
-                              <option key={d} value={d}>
-                                {d}
-                              </option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                    </div>
+                  {/* Date of Birth */}
+                  <div>
+                    <label htmlFor="reg-dob" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      id="reg-dob"
+                      name="dateOfBirth"
+                      placeholder="dd/mm/yyyy"
+                      value={form.dateOfBirth}
+                      onChange={handleChange}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* State */}
+                  <div>
+                    <label htmlFor="reg-state" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      State / Union Territory *
+                    </label>
+                    <select
+                      id="reg-state"
+                      name="state"
+                      value={form.state}
+                      onChange={handleStateChange}
+                      className="form-select w-full"
+                      required
+                    >
+                      <option value="">Select State / UT</option>
+                      {statesList.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div className="form-group">
+                  {/* District */}
+                  <div>
+                    <label htmlFor="reg-district" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      District *
+                    </label>
+                    <select
+                      id="reg-district"
+                      name="district"
+                      value={form.district}
+                      onChange={handleChange}
+                      disabled={!form.state}
+                      className="form-select w-full"
+                      required
+                    >
+                      {!form.state ? (
+                        <option value="">Select State First</option>
+                      ) : (
+                        <>
+                          <option value="">Select District</option>
+                          {availableDistricts.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Institution */}
+                  <div>
+                    <label htmlFor="reg-institution" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Institution / College
+                    </label>
                     <input
                       type="text"
                       id="reg-institution"
                       name="institution"
-                      placeholder="Institution Name"
+                      placeholder="Enter institution name"
                       value={form.institution}
                       onChange={handleChange}
                       className="form-input"
                     />
-                    <label htmlFor="reg-institution" className="form-label">
-                      Institution Name
+                  </div>
+
+                  {/* Course */}
+                  <div>
+                    <label htmlFor="reg-course" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                      Course
                     </label>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="form-group">
-                      <input
-                        type="text"
-                        id="reg-course"
-                        name="course"
-                        placeholder="Course Name"
-                        value={form.course}
-                        onChange={handleChange}
-                        className="form-input"
-                      />
-                      <label htmlFor="reg-course" className="form-label">
-                        Course Name
-                      </label>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="reg-year"
-                        className="text-xs font-medium text-gray-600 mb-1 block"
-                      >
-                        Year of Study
-                      </label>
-                      <select
-                        id="reg-year"
-                        name="yearOfStudy"
-                        value={form.yearOfStudy}
-                        onChange={handleChange}
-                        className="form-select w-full"
-                      >
-                        <option value="">Select Year</option>
-                        {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'].map((y) => (
-                          <option key={y} value={y}>
-                            {y}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => setStep(0)}
-                      className="btn-secondary flex-1 py-3"
-                    >
-                      <ArrowLeft className="h-4 w-4" /> Back
-                    </button>
-                    <button
-                      type="submit"
-                      id="register-btn"
-                      disabled={loading}
-                      className="btn-primary flex-1 py-3 text-base"
-                    >
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" /> Registering...
-                        </>
-                      ) : (
-                        <>
-                          Register <ArrowRight className="h-4 w-4" />
-                        </>
-                      )}
-                    </button>
+                    <input
+                      type="text"
+                      id="reg-course"
+                      name="course"
+                      placeholder="Select Course / Degree"
+                      value={form.course}
+                      onChange={handleChange}
+                      className="form-input"
+                    />
                   </div>
                 </div>
-              )}
-            </form>
 
-            <p className="text-center text-sm text-gray-500 mt-5">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary font-semibold hover:underline">
-                Sign In
-              </Link>
-            </p>
-          </div>
+                {/* Year of Study */}
+                <div>
+                  <label htmlFor="reg-year" className="text-xs font-bold text-gray-700 dark:text-[#E0E0E0] mb-2 block">
+                    Year of Study
+                  </label>
+                  <select
+                    id="reg-year"
+                    name="yearOfStudy"
+                    value={form.yearOfStudy}
+                    onChange={handleChange}
+                    className="form-select w-full"
+                  >
+                    <option value="">Select Year</option>
+                    {['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year'].map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setStep(0)}
+                    className="btn-secondary flex-1 py-3"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <button
+                    type="submit"
+                    id="register-btn"
+                    disabled={loading}
+                    className="btn-primary flex-1 py-3 text-base"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" /> Registering...
+                      </>
+                    ) : (
+                      <>
+                        Complete Registration <ArrowRight className="h-5 w-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
         </div>
       </div>
     </div>
@@ -482,3 +490,4 @@ const Register = () => {
 };
 
 export default Register;
+

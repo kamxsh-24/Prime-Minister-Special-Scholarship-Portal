@@ -93,14 +93,14 @@ const DocumentUploadCard = ({
       <p className="text-xs text-gray-400">{hint}</p>
 
       {uploaded && !error ? (
-        <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-          <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+        <div className="flex items-center gap-3 p-3 bg-[#F0FDF4] dark:bg-[#0B2E1B] border border-[#86EFAC] dark:border-[#166534] rounded-xl">
+          <CheckCircle className="h-5 w-5 text-[#22C55E] dark:text-[#4ADE80] flex-shrink-0" />
           {isPhotoField && (preview || value) ? (
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <img
                 src={preview || getMediaUrl(value)}
                 alt="preview"
-                className="h-10 w-10 rounded-lg object-cover border border-green-200"
+                className="h-10 w-10 rounded-lg object-cover border border-[#86EFAC] dark:border-[#166534]"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
               />
               {value && (
@@ -116,8 +116,8 @@ const DocumentUploadCard = ({
             </div>
           ) : (
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <FileText className="h-4 w-4 text-green-600 flex-shrink-0" />
-              <span className="text-sm text-green-700 truncate">{preview || 'File uploaded'}</span>
+              <FileText className="h-4 w-4 text-[#15803D] dark:text-[#4ADE80] flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-[#15803D] dark:text-[#4ADE80] font-semibold truncate">{preview || 'File uploaded'}</span>
               {value && (
                 <a
                   href={getMediaUrl(value)}
@@ -189,7 +189,7 @@ const DocumentUploadCard = ({
         <div className="flex flex-col gap-1.5 mt-1.5">
           <div className="flex items-center gap-1.5">
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-              status === 'verified' ? 'bg-green-50 text-green-700 border-green-200' :
+              status === 'verified' ? 'bg-[#F0FDF4] text-[#15803D] border-[#86EFAC] dark:bg-[#0B2E1B] dark:text-[#4ADE80] dark:border-[#166534]' :
               status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
               'bg-amber-50 text-amber-700 border-amber-200'
             }`}>

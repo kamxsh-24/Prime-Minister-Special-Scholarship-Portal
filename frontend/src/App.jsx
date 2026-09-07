@@ -6,7 +6,7 @@ import { ToastContainer } from './components/ui/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { LanguageProvider } from './context/LanguageContext';
-
+import { ThemeProvider } from './context/ThemeContext';
 
 // Public Pages
 import HomePage from './pages/HomePage';
@@ -37,7 +37,8 @@ import InstitutionDashboard from './pages/InstitutionDashboard';
 const App = () => {
   return (
     <Provider store={store}>
-      <LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
           <BrowserRouter>
             <ToastContainer />
             <Routes>
@@ -79,6 +80,30 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles="student">
                     <MyProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/documents"
+                element={
+                  <ProtectedRoute allowedRoles="student">
+                    <MyProfile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/messages"
+                element={
+                  <ProtectedRoute allowedRoles="student">
+                    <ApplicationStatus />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/support"
+                element={
+                  <ProtectedRoute allowedRoles="student">
+                    <ApplicationStatus />
                   </ProtectedRoute>
                 }
               />
@@ -155,7 +180,8 @@ const App = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
-      </LanguageProvider>
+        </LanguageProvider>
+      </ThemeProvider>
     </Provider>
   );
 };

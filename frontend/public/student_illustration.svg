@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 550" width="100%" height="100%">
+  <defs>
+    <!-- Soft Background Backdrop Glows -->
+    <radialGradient id="backdropLight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#DBEAFE" stop-opacity="0.95"/>
+      <stop offset="55%" stop-color="#EFF6FF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    
+    <radialGradient id="backdropDark" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.3"/>
+      <stop offset="65%" stop-color="#0F172A" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Vibrant Clothing & UI Gradients -->
+    <linearGradient id="yellowOutfit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FACC15"/>
+      <stop offset="100%" stop-color="#EAB308"/>
+    </linearGradient>
+
+    <linearGradient id="blueCenterOutfit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1565F9"/>
+      <stop offset="100%" stop-color="#0D47A1"/>
+    </linearGradient>
+
+    <linearGradient id="greenRightOutfit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+
+    <linearGradient id="skinTone1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FED7AA"/>
+      <stop offset="100%" stop-color="#FDBA74"/>
+    </linearGradient>
+
+    <linearGradient id="skinTone2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFEDD5"/>
+      <stop offset="100%" stop-color="#FED7AA"/>
+    </linearGradient>
+
+    <linearGradient id="laptopShell" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+
+    <linearGradient id="laptopDisplay" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+
+    <!-- Soft Drop Shadows -->
+    <filter id="heroShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0F172A" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background Aura Dome -->
+  <ellipse cx="450" cy="275" rx="360" ry="240" fill="url(#backdropLight)" class="light-glow"/>
+  <ellipse cx="450" cy="275" rx="360" ry="240" fill="url(#backdropDark)" class="dark-glow"/>
+
+  <!-- University Dome & Columns Line Architecture (Subtle Outline) -->
+  <g stroke="#94A3B8" stroke-width="1.8" fill="none" opacity="0.35" stroke-dasharray="5 5">
+    <path d="M 260 280 A 190 190 0 0 1 640 280" />
+    <path d="M 330 220 A 120 120 0 0 1 570 220" />
+    <line x1="450" y1="100" x2="450" y2="130" />
+    <polygon points="450,80 460,100 440,100" fill="#94A3B8" />
+    <line x1="280" y1="280" x2="280" y2="440" />
+    <line x1="360" y1="240" x2="360" y2="440" />
+    <line x1="540" y1="240" x2="540" y2="440" />
+    <line x1="620" y1="280" x2="620" y2="440" />
+  </g>
+
+  <!-- Ground Shadow Base -->
+  <ellipse cx="450" cy="485" rx="380" ry="30" fill="#000000" opacity="0.1"/>
+
+  <!-- ============================================================== -->
+  <!-- LEFT STUDENT (Female Student in Yellow Jacket holding Notebooks) -->
+  <!-- ============================================================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Back Hair -->
+    <path d="M 190 190 C 170 230 160 310 185 370 C 195 320 210 260 225 210 Z" fill="#1E293B"/>
+    <!-- Yellow Jacket Body -->
+    <path d="M 190 290 C 215 270 265 270 295 300 L 305 470 L 175 470 Z" fill="url(#yellowOutfit)"/>
+    <!-- Inner Top -->
+    <path d="M 230 290 L 255 330 L 270 290 Z" fill="#FFFFFF"/>
+    <!-- Backpack Strap -->
+    <path d="M 215 285 C 222 320 232 380 240 420" stroke="#334155" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <!-- Neck -->
+    <rect x="235" y="245" width="22" height="35" rx="10" fill="url(#skinTone1)"/>
+    <!-- Head / Face -->
+    <ellipse cx="246" cy="210" rx="34" ry="38" fill="url(#skinTone1)"/>
+    <!-- Hair Front Bangs -->
+    <path d="M 212 205 C 215 160 265 155 282 185 C 265 185 250 190 236 210 C 226 205 218 205 212 205 Z" fill="#1E293B"/>
+    <!-- Facial Features -->
+    <ellipse cx="258" cy="208" rx="3.5" ry="4" fill="#0F172A"/>
+    <path d="M 254 200 Q 260 197 264 200" stroke="#0F172A" stroke-width="1.8" fill="none"/>
+    <path d="M 262 226 Q 255 234 246 227" stroke="#E11D48" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    
+    <!-- Arm & Holding Blue Notebook -->
+    <path d="M 275 305 L 245 375 L 295 390" stroke="url(#skinTone1)" stroke-width="16" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+    <!-- Notebook -->
+    <rect x="250" y="350" width="65" height="75" rx="6" fill="#0284C7" transform="rotate(-12 250 350)" filter="url(#heroShadow)"/>
+    <rect x="258" y="358" width="48" height="6" rx="3" fill="#FFFFFF" transform="rotate(-12 250 350)"/>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- RIGHT STUDENT (Female Student in Green Outfit holding Tablet/Folder) -->
+  <!-- ============================================================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Green Outfit Body -->
+    <path d="M 605 295 C 635 270 685 270 710 300 L 725 470 L 590 470 Z" fill="url(#greenRightOutfit)"/>
+    <!-- Inner Top -->
+    <path d="M 645 295 L 660 330 L 675 295 Z" fill="#F8FAFC"/>
+    <!-- Neck -->
+    <rect x="648" y="245" width="22" height="35" rx="10" fill="url(#skinTone2)"/>
+    <!-- Head / Face -->
+    <ellipse cx="659" cy="210" rx="33" ry="37" fill="url(#skinTone2)"/>
+    <!-- High Hair Bun -->
+    <ellipse cx="659" cy="158" rx="22" ry="22" fill="#0F172A"/>
+    <path d="M 626 205 C 624 165 660 165 690 185 C 675 180 658 182 645 205 Z" fill="#0F172A"/>
+    <!-- Facial Features -->
+    <ellipse cx="645" cy="208" rx="3.5" ry="4" fill="#0F172A"/>
+    <path d="M 640 200 Q 646 197 650 200" stroke="#0F172A" stroke-width="1.8" fill="none"/>
+    <path d="M 642 226 Q 649 234 657 226" stroke="#E11D48" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    
+    <!-- Arm & Holding Tablet -->
+    <path d="M 620 305 L 595 370 L 640 385" stroke="url(#skinTone2)" stroke-width="16" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+    <!-- Tablet -->
+    <rect x="565" y="335" width="70" height="90" rx="8" fill="#1E293B" transform="rotate(14 565 335)"/>
+    <rect x="572" y="343" width="56" height="74" rx="4" fill="#64748B" transform="rotate(14 565 335)"/>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- CENTER STUDENT (Male Student in Blue Jacket Working on Laptop) -->
+  <!-- ============================================================== -->
+  <g filter="url(#heroShadow)">
+    <!-- Blue Jacket Body -->
+    <path d="M 350 295 C 410 260 490 260 550 295 L 570 470 L 330 470 Z" fill="url(#blueCenterOutfit)"/>
+    <!-- White Shirt Collar -->
+    <polygon points="450,295 425,260 475,260" fill="#FFFFFF"/>
+    <polygon points="450,295 440,340 460,340" fill="#E2E8F0"/>
+    <!-- Neck -->
+    <rect x="438" y="230" width="24" height="35" rx="10" fill="url(#skinTone1)"/>
+    <!-- Head / Face -->
+    <ellipse cx="450" cy="195" rx="36" ry="40" fill="url(#skinTone1)"/>
+    <!-- Hair Modern Cut -->
+    <path d="M 412 190 C 408 140 475 135 490 175 C 475 165 442 168 422 192 Z" fill="#0F172A"/>
+    <!-- Eye & Friendly Smile -->
+    <ellipse cx="433" cy="192" rx="3.5" ry="4" fill="#0F172A"/>
+    <ellipse cx="467" cy="192" rx="3.5" ry="4" fill="#0F172A"/>
+    <path d="M 439 216 Q 450 228 461 216" stroke="#0F172A" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Desk Surface Base -->
+    <rect x="300" y="415" width="300" height="16" rx="6" fill="#E2E8F0" opacity="0.95"/>
+    <rect x="290" y="431" width="320" height="4" rx="2" fill="#CBD5E1"/>
+
+    <!-- Laptop Base / Keyboard Deck -->
+    <path d="M 360 415 L 540 415 L 555 427 L 345 427 Z" fill="url(#laptopShell)"/>
+    <!-- Laptop Open Screen -->
+    <rect x="375" y="310" width="150" height="105" rx="7" fill="url(#laptopShell)"/>
+    <rect x="382" y="317" width="136" height="91" rx="4" fill="url(#laptopDisplay)"/>
+    
+    <!-- PMSSS Cap Emblem on Laptop Screen -->
+    <polygon points="450,342 466,350 450,358 434,350" fill="#FFFFFF"/>
+    <rect x="447" y="358" width="6" height="10" fill="#FFFFFF"/>
+    <circle cx="468" cy="353" r="2" fill="#FFFFFF"/>
+
+    <!-- Hands Typing on Keyboard -->
+    <ellipse cx="410" cy="414" rx="18" ry="9" fill="url(#skinTone1)"/>
+    <ellipse cx="490" cy="414" rx="18" ry="9" fill="url(#skinTone1)"/>
+  </g>
+</svg>

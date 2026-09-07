@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,29 +9,32 @@ export default {
     extend: {
       colors: {
         primary: {
-          50:  '#f1f8f6',
-          100: '#ddeee9',
-          200: '#beddd3',
-          300: '#95c6b6',
-          400: '#7baf9e',
-          500: '#7baf9e',
-          600: '#6ca08f',
-          700: '#5e9c88',
-          800: '#4a7d6e',
-          900: '#3e665a',
-          DEFAULT: '#7baf9e',
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          DEFAULT: '#2563eb',
         },
-        blue: {
-          50:  '#f1f8f6',
-          100: '#ddeee9',
-          200: '#beddd3',
-          300: '#95c6b6',
-          400: '#7baf9e',
-          500: '#7baf9e',
-          600: '#7baf9e',
-          700: '#5e9c88',
-          800: '#4a7d6e',
-          900: '#3e665a',
+        dark: {
+          bg: '#000000',
+          surface: '#121212',
+          card: '#161616',
+          elevated: '#1E1E1E',
+          border: '#333333',
+          'border-muted': '#424242',
+          text: '#FFFFFF',
+          'text-secondary': '#E0E0E0',
+          'text-muted': '#BDBDBD',
+          blue: '#4FC3F7',
+          green: '#81C784',
+          orange: '#FFB74D',
+          red: '#EF5350',
         },
         accent: {
           50:  '#fffbeb',
@@ -40,11 +44,11 @@ export default {
           400: '#fbbf24',
           500: '#f59e0b',
           600: '#d97706',
-          DEFAULT: '#F59E0B',
+          DEFAULT: '#f59e0b',
         },
         status: {
           draft:       '#6b7280',
-          submitted:   '#7baf9e',
+          submitted:   '#2563eb',
           under_review:'#f59e0b',
           verified:    '#7c3aed',
           approved:    '#16a34a',
@@ -63,12 +67,12 @@ export default {
         display: ['Poppins', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.07)',
+        'card': '0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.06)',
         'card-md': '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.08)',
         'card-lg': '0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.08)',
+        'dark-card': '0 4px 20px 0 rgba(0,0,0,0.8)',
         'primary': '0 4px 14px 0 rgba(37,99,235,0.25)',
         'accent': '0 4px 14px 0 rgba(245,158,11,0.25)',
-        'inner-sm': 'inset 0 1px 2px rgba(0,0,0,0.05)',
       },
       borderRadius: {
         'xl': '12px',
@@ -79,8 +83,6 @@ export default {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-up': 'slideUp 0.4s ease-out',
         'slide-in-right': 'slideInRight 0.3s ease-out',
-        'pulse-slow': 'pulse 3s infinite',
-        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -100,3 +102,4 @@ export default {
   },
   plugins: [],
 };
+

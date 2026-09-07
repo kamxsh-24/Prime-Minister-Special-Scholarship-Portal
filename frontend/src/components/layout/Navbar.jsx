@@ -2,35 +2,31 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
+import { useTheme } from '../../context/ThemeContext';
 import UserAvatar from '../ui/UserAvatar';
 import {
-  BookOpen,
-  LayoutDashboard,
-  FileText,
-  LogOut,
-  User,
-  Bell,
-  ChevronDown,
-  Shield,
   GraduationCap,
-  Menu,
-  X,
   Sun,
   Moon,
+  User,
+  LogOut,
+  ChevronDown,
+  Menu,
+  X,
+  LogIn,
+  UserPlus,
 } from 'lucide-react';
-
 
 const Navbar = ({ onMenuToggle, sidebarOpen }) => {
   const { user } = useSelector((s) => s.auth);
   const { profile } = useSelector((s) => s.profile);
+  const { theme, toggleTheme } = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef();
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -46,176 +42,150 @@ const Navbar = ({ onMenuToggle, sidebarOpen }) => {
     navigate('/login');
   };
 
-  const isStudent = user?.role === 'student';
   const isAdmin = user?.role === 'admin';
-
-  const navLinks = isAdmin
-    ? [
-        { to: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/admin/applications', icon: FileText, label: 'Applications' },
-        { to: '/admin/profiles', icon: User, label: 'Profiles' },
-        { to: '/admin/reports', icon: BookOpen, label: 'Reports' },
-        { to: '/admin/users', icon: User, label: 'Users' },
-      ]
-    : [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/dashboard/profile', icon: User, label: 'My Profile' },
-        { to: '/dashboard/application', icon: FileText, label: 'Application' },
-        { to: '/dashboard/status', icon: Bell, label: 'Status' },
-      ];
-
   const avatarSrc = user?.profilePhoto || profile?.profilePhoto;
 
   return (
-    <>
-      {/* Indian flag tricolor strip */}
-      <div className="gov-banner" />
-
-      <nav className="sticky top-0 z-40 bg-white border-b border-gray-100 shadow-card">
-        <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Left: Logo + Sidebar toggle */}
-          <div className="flex items-center gap-3">
-            {user && onMenuToggle && (
-              <button
-                onClick={onMenuToggle}
-                className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors lg:hidden"
-                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-              >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            )}
-
-            <Link to={isAdmin ? '/admin' : user ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
-              <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-primary/20 shadow group-hover:shadow-lg transition-shadow">
-                <GraduationCap className="h-5 w-5 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-bold text-gray-900 leading-tight">PMSS Portal</p>
-                <p className="text-[10px] text-gray-400 leading-tight">Prime Minister Special Scholarship</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Center: Nav links (desktop) */}
-          {user && (
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map(({ to, icon: Icon, label }) => {
-                const active = location.pathname === to || (to !== '/' && location.pathname.startsWith(to) && to !== '/admin' && to !== '/dashboard');
-                const exactActive = location.pathname === to;
-                const isActive = to === '/admin' || to === '/dashboard' ? exactActive : active;
-                return (
-                  <Link
-                    key={to}
-                    to={to}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary-50 text-primary'
-                        : 'text-gray-600 hover:text-primary hover:bg-primary-50'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </Link>
-                );
-              })}
-            </div>
+    <header className="sticky top-0 z-50 bg-white dark:bg-[#000000] border-b border-[#D9E2EC] dark:border-[#333333] transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        
+        {/* Left Side: Brand Logo & Title */}
+        <div className="flex items-center gap-3">
+          {user && onMenuToggle && (
+            <button
+              onClick={onMenuToggle}
+              className="p-2 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1E1E1E] transition-colors lg:hidden"
+              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+            >
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           )}
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3">
-            {!user ? (
+          <Link to={isAdmin ? '/admin' : user ? '/dashboard' : '/'} className="flex items-center gap-3 group">
+            <div className="h-11 w-11 rounded-xl bg-[#0D6EFD] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform text-white">
+              <GraduationCap className="h-7 w-7" />
+            </div>
+            <div>
+              <p className="text-lg font-extrabold text-[#0B2545] dark:text-white leading-tight tracking-tight font-display">
+                PMSSS
+              </p>
+              <p className="text-xs text-[#334E68] dark:text-[#BDBDBD] font-medium leading-tight">
+                Scholarship Management Portal
+              </p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Right Side: Theme Switcher & Auth Buttons */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            id="theme-toggle-btn"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#D9E2EC] dark:border-[#333333] bg-white dark:bg-[#121212] text-[#334E68] dark:text-[#E0E0E0] hover:bg-gray-50 dark:hover:bg-[#1E1E1E] transition-all text-xs font-semibold shadow-xs"
+            title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          >
+            {theme === 'dark' ? (
               <>
-                <Link to="/login" className="btn-ghost text-sm">Sign In</Link>
-                <Link to="/register" className="btn-primary text-sm">Register</Link>
+                <Sun className="h-4 w-4 text-[#FFB74D]" />
+                <span className="inline">Light</span>
               </>
             ) : (
               <>
-                {/* Role Badge */}
-                <span className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                  isAdmin ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                  user?.role === 'institution_officer' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-blue-50 text-blue-700 border-blue-200'
-                }`}>
-                  {isAdmin ? <Shield className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
-                  {isAdmin ? 'Admin' : user?.role === 'institution_officer' ? 'College Nodal' : 'Student'}
-                </span>
-
-
-
-                {/* Profile Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setProfileOpen((p) => !p)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-all text-sm font-medium text-gray-700"
-                    id="profile-menu-btn"
-                    aria-expanded={profileOpen}
-                    aria-haspopup="true"
-                  >
-                    <UserAvatar src={avatarSrc} name={user.fullName} className="h-7 w-7 rounded-full" textClassName="text-xs font-semibold" />
-                    <span className="hidden sm:block max-w-[120px] truncate">{user.fullName}</span>
-                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {profileOpen && (
-                    <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-card-lg border border-gray-100 py-1 animate-fade-in z-50">
-                      <div className="px-4 py-3 border-b border-gray-50">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{user.fullName}</p>
-                        <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                      </div>
-                      {!isAdmin && (
-                        <Link
-                          to="/dashboard/profile"
-                          onClick={() => setProfileOpen(false)}
-                          className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-50 transition-colors"
-                        >
-                          <User className="h-4 w-4" />
-                          My Profile
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        id="pmss-logout-btn"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Sign Out
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Mobile menu toggle */}
-                <button
-                  onClick={() => setMobileOpen((p) => !p)}
-                  className="md:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"
-                  aria-label="Toggle mobile menu"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+                <Moon className="h-4 w-4 text-[#0D6EFD]" />
+                <span className="inline">Dark</span>
               </>
             )}
-          </div>
-        </div>
+          </button>
 
-        {/* Mobile nav links */}
-        {user && mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 px-4 py-2 flex flex-col gap-1 animate-fade-in">
-            {navLinks.map(({ to, icon: Icon, label }) => (
+          {!user ? (
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Login Button */}
               <Link
-                key={to}
-                to={to}
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary transition-all"
+                to="/login"
+                id="nav-login-btn"
+                className="btn-secondary px-5 py-2 text-sm font-semibold flex items-center gap-1.5"
               >
-                <Icon className="h-4 w-4" />
-                {label}
+                <User className="h-4 w-4" />
+                Login
               </Link>
-            ))}
-          </div>
-        )}
-      </nav>
-    </>
+
+              {/* Register Button */}
+              <Link
+                to="/register"
+                id="nav-register-btn"
+                className="btn-primary px-5 py-2 text-sm font-semibold flex items-center gap-1.5"
+              >
+                <User className="h-4 w-4" />
+                Register
+              </Link>
+            </div>
+          ) : (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setProfileOpen((p) => !p)}
+                id="profile-menu-btn"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-[#D9E2EC] dark:border-[#333333] hover:bg-gray-50 dark:hover:bg-[#1E1E1E] transition-all"
+                aria-expanded={profileOpen}
+              >
+                <UserAvatar
+                  src={avatarSrc}
+                  name={user.fullName}
+                  className="h-8 w-8 rounded-full border border-gray-200 dark:border-[#424242]"
+                  textClassName="text-xs font-semibold"
+                />
+                <span className="hidden sm:block text-xs font-bold text-[#0B2545] dark:text-white truncate max-w-[120px]">
+                  {user.fullName}
+                </span>
+                <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#161616] rounded-2xl shadow-xl border border-[#D9E2EC] dark:border-[#333333] py-2 z-50">
+                  <div className="px-4 py-2.5 border-b border-gray-100 dark:border-[#333333]">
+                    <p className="text-xs font-bold text-[#0B2545] dark:text-white truncate">{user.fullName}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-[#BDBDBD] truncate">{user.email}</p>
+                  </div>
+
+                  <Link
+                    to={isAdmin ? '/admin' : '/dashboard'}
+                    onClick={() => setProfileOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-50 dark:hover:bg-[#1E1E1E]"
+                  >
+                    <GraduationCap className="h-4 w-4 text-[#0D6EFD]" />
+                    Dashboard
+                  </Link>
+
+                  {!isAdmin && (
+                    <Link
+                      to="/dashboard/profile"
+                      onClick={() => setProfileOpen(false)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-50 dark:hover:bg-[#1E1E1E]"
+                    >
+                      <User className="h-4 w-4 text-[#0D6EFD]" />
+                      My Profile
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    id="pmss-logout-btn"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-red-600 dark:text-[#EF5350] hover:bg-red-50 dark:hover:bg-[#1E1E1E] font-medium border-t border-gray-100 dark:border-[#333333] mt-1"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
   );
 };
 
 export default Navbar;
+
+

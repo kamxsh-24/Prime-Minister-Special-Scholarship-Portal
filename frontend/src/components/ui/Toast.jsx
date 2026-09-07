@@ -4,17 +4,17 @@ import { removeToast } from '../../store/slices/toastSlice';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 const ICONS = {
-  success: <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />,
+  success: <CheckCircle className="h-5 w-5 text-[#22C55E] dark:text-[#4ADE80] flex-shrink-0" />,
   error:   <XCircle    className="h-5 w-5 text-red-500   flex-shrink-0" />,
   warning: <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0" />,
   info:    <Info       className="h-5 w-5 text-blue-500  flex-shrink-0" />,
 };
 
 const BG = {
-  success: 'bg-green-50 border-green-200',
-  error:   'bg-red-50   border-red-200',
-  warning: 'bg-amber-50 border-amber-200',
-  info:    'bg-blue-50  border-blue-200',
+  success: 'bg-[#F0FDF4] dark:bg-[#0B2E1B] border-[#86EFAC] dark:border-[#166534]',
+  error:   'bg-red-50   border-red-200 dark:bg-red-950/40 dark:border-red-900/50',
+  warning: 'bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50',
+  info:    'bg-blue-50  border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/50',
 };
 
 const Toast = ({ toast }) => {

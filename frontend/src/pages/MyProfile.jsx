@@ -451,32 +451,32 @@ const MyProfile = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Header Summary */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-card">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 card p-6 border border-[#E5E7EB] dark:border-[#132235] shadow-sm">
           <div className="flex items-center gap-4">
             <UserAvatar
               src={profileData.profilePhoto}
               name={profileData.fullName || user?.fullName}
-              className="h-16 w-16 rounded-full border-2 border-primary/20"
+              className="h-16 w-16 rounded-full border-2 border-blue-500/30"
               textClassName="text-xl font-bold"
             />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">{profileData.fullName || user?.fullName}</h1>
-              <p className="text-xs text-gray-400 mt-0.5">Role: Student • {profileData.email}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F2A5F] dark:text-[#F8FAFC]">{profileData.fullName || user?.fullName}</h1>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">Role: Student • {profileData.email}</p>
               
               <div className="flex gap-2 mt-2">
                 {/* Verification Status Badge */}
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
                   profileData.verificationStatus === 'verified'
-                    ? 'bg-green-50 text-green-700 border-green-200'
+                    ? 'bg-[#F0FDF4] text-[#15803D] border-[#86EFAC] dark:bg-[#072414] dark:text-[#22C55E] dark:border-[#22C55E]/30'
                     : profileData.verificationStatus === 'rejected'
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                    ? 'bg-red-50 text-red-700 border-red-200 dark:bg-[#240A0A] dark:text-[#EF4444] dark:border-[#EF4444]/30'
+                    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-[#1E170C] dark:text-[#F59E0B] dark:border-[#F59E0B]/30'
                 }`}>
                   {profileData.verificationStatus === 'verified' ? '✓ Verified' : profileData.verificationStatus === 'rejected' ? '✗ Rejected' : '⧗ Pending Verify'}
                 </span>
                 
                 {profileData.deleteRequested && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wider">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-[#240A0A] dark:text-[#EF4444] uppercase tracking-wider">
                     Delete Requested
                   </span>
                 )}
@@ -485,18 +485,18 @@ const MyProfile = () => {
           </div>
 
           {/* Completion Progress Bar */}
-          <div className="w-full md:w-64 space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100/50">
-            <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase">
+          <div className="w-full md:w-64 space-y-2 bg-[#F5F8FC] dark:bg-[#03070D] p-4 rounded-2xl border border-[#E5E7EB] dark:border-[#132235]">
+            <div className="flex justify-between items-center text-xs font-semibold text-[#64748B] dark:text-[#94A3B8] uppercase">
               <span>Profile Complete</span>
-              <span className="text-primary font-black">{completionPercent}%</span>
+              <span className="text-[#1769FF] dark:text-[#1769FF] font-bold">{completionPercent}%</span>
             </div>
-            <div className="w-full bg-gray-200 h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-gray-200 dark:bg-[#132235] h-2.5 rounded-full overflow-hidden">
               <div
-                className="bg-primary h-full rounded-full transition-all duration-500"
+                className="bg-[#1769FF] dark:bg-[#1769FF] h-full rounded-full transition-all duration-500"
                 style={{ width: `${completionPercent}%` }}
               />
             </div>
-            <p className="text-[10px] text-gray-400">Complete profile to unlock application autofills.</p>
+            <p className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">Complete profile to unlock application autofills.</p>
           </div>
         </div>
 
@@ -504,17 +504,18 @@ const MyProfile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           
           {/* Tab Selection Navigation */}
-          <div className="card p-3 space-y-1">
+          <div className="card p-3 space-y-1 border border-gray-200 dark:border-[#333333]">
             {TABS.map((tab) => {
               const TabIcon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl text-left transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-primary text-white shadow-primary'
-                      : 'text-gray-600 hover:bg-gray-50'
+                    isActive
+                      ? 'bg-blue-600 text-white dark:bg-[#4FC3F7] dark:text-black shadow-sm font-bold'
+                      : 'text-gray-700 dark:text-[#E0E0E0] hover:bg-gray-100 dark:hover:bg-[#1E1E1E]'
                   }`}
                 >
                   <TabIcon className="h-4 w-4" />
@@ -526,14 +527,14 @@ const MyProfile = () => {
 
           {/* Form Content Panel */}
           <div className="lg:col-span-3">
-            <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-gray-100 shadow-card overflow-hidden">
+            <form onSubmit={handleSubmit} className="card border border-gray-200 dark:border-[#333333] shadow-card overflow-hidden">
               
               <div className="p-6 sm:p-8 space-y-6">
                 
                 {/* 1. PERSONAL DETAILS */}
                 {activeTab === 'personal' && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Personal Information</h3>
+                    <h3 className="text-lg font-bold text-[#0B1F3A] dark:text-white border-b border-gray-200 dark:border-[#333333] pb-3">Personal Information</h3>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="fullName" className="text-xs font-semibold text-gray-500 mb-1 block">Full Name *</label>

@@ -18,14 +18,15 @@ import {
   ArrowRight,
   Loader2,
   MessageSquare,
+  CheckCircle2,
 } from 'lucide-react';
 
 const TIMELINE = [
-  { status: 'submitted',            label: 'Submitted',    desc: 'Your application has been successfully submitted.' },
-  { status: 'institution_verified',  label: 'Verification', desc: 'Your college or institution has verified your registration and details.' },
-  { status: 'under_review',          label: 'Review',       desc: 'State and nodal officers are reviewing your application.' },
-  { status: 'approved',              label: 'Approved',     desc: 'Congratulations! Your scholarship application has been officially approved.' },
-  { status: 'disbursed',             label: 'Released',     desc: 'Scholarship funds have been disbursed to your Aadhar-seeded bank account.' },
+  { status: 'submitted',            label: 'Registration & Submission', desc: 'Your application has been successfully submitted.' },
+  { status: 'institution_verified',  label: 'Institute Verification',     desc: 'Your college or institution nodal officer has verified your registration details.' },
+  { status: 'under_review',          label: 'Officer Verification',       desc: 'State and nodal scholarship officers are reviewing your documents.' },
+  { status: 'approved',              label: 'Final Decision & Approval',  desc: 'Congratulations! Your scholarship application has been officially approved.' },
+  { status: 'disbursed',             label: 'Fund Disbursement',          desc: 'Scholarship funds have been disbursed to your Aadhaar-seeded bank account.' },
 ];
 
 const ApplicationStatus = () => {
@@ -65,7 +66,7 @@ const ApplicationStatus = () => {
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'PMSS_Approval_Letter.pdf';
+      a.download = 'PMSSS_Approval_Letter.pdf';
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -82,44 +83,56 @@ const ApplicationStatus = () => {
 
   const currentIdx = application ? getStepIndex(application.status) : -1;
   const isRejected = application?.status === 'rejected';
-  const isApproved = application?.status === 'approved';
+  const isApproved = application?.status === 'approved' || application?.status === 'disbursed';
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">Application Status</h1>
-        <p className="text-sm text-gray-500 mb-6">Track your scholarship application in real time</p>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="pb-2 border-b border-gray-200 dark:border-[#333333]">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] dark:text-white font-display">
+            Application Status
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-[#BDBDBD] mt-1">
+            Track your PMSSS scholarship application progress and verification timeline in real time
+          </p>
+        </div>
 
         {loading ? (
           <SkeletonCard />
         ) : !application ? (
-          <div className="card p-10 text-center">
-            <div className="h-16 w-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-8 w-8 text-gray-400" />
+          <div className="card p-10 text-center border border-gray-200 dark:border-[#333333]">
+            <div className="h-16 w-16 bg-blue-50 dark:bg-[#161616] text-blue-600 dark:text-[#4FC3F7] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 dark:border-[#333333]">
+              <FileText className="h-8 w-8" />
             </div>
-            <h2 className="font-semibold text-gray-900 mb-2">No Application Found</h2>
-            <p className="text-sm text-gray-500 mb-5">You haven't applied for the scholarship yet.</p>
+            <h2 className="font-extrabold text-[#0B1F3A] dark:text-white text-lg mb-2">No Application Found</h2>
+            <p className="text-xs text-gray-500 dark:text-[#BDBDBD] mb-6 max-w-sm mx-auto">
+              You haven't submitted a PMSSS scholarship application yet.
+            </p>
             <Link to="/dashboard/application" className="btn-primary">
-              Apply Now <ArrowRight className="h-4 w-4" />
+              Start Application <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         ) : (
-          <div className="space-y-5">
-            {/* Status Header */}
-            <div className={`card p-5 border-l-4 ${
-              isApproved ? 'border-l-green-500' :
-              isRejected ? 'border-l-red-500' :
-              'border-l-primary'
-            }`}>
-              <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="space-y-6">
+            {/* Status Header Card */}
+            <div className="card p-6 border border-gray-200 dark:border-[#333333] shadow-card">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Current Status</p>
-                  <StatusBadge status={application.status} className="text-sm" />
+                  <p className="text-xs font-semibold text-gray-400 dark:text-[#BDBDBD] uppercase tracking-wider mb-1">
+                    Current Application Status
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <StatusBadge status={application.status} className="text-sm px-3 py-1" />
+                    <span className="text-xs font-mono font-bold text-gray-600 dark:text-[#E0E0E0]">
+                      ID: PMSSS-2026-{application._id.slice(-6).toUpperCase()}
+                    </span>
+                  </div>
                 </div>
+
                 {application.submittedAt && (
-                  <div className="text-right">
-                    <p className="text-xs text-gray-400">Submitted On</p>
-                    <p className="text-sm font-medium text-gray-700">
+                  <div className="sm:text-right">
+                    <p className="text-xs text-gray-400 dark:text-[#BDBDBD]">Submitted On</p>
+                    <p className="text-sm font-bold text-[#0B1F3A] dark:text-white">
                       {new Date(application.submittedAt).toLocaleDateString('en-IN', {
                         day: '2-digit', month: 'long', year: 'numeric'
                       })}
@@ -128,11 +141,11 @@ const ApplicationStatus = () => {
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-xs text-slate-500 font-medium">Export application copy:</span>
+              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-[#333333] flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs text-gray-500 dark:text-[#BDBDBD] font-medium">Export official application document:</span>
                 <button
                   onClick={handleDownloadAppPDF}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow"
+                  className="btn-secondary text-xs px-4 py-2 flex items-center gap-2"
                   id="download-application-pdf-btn"
                 >
                   <FileText className="h-4 w-4" />
@@ -141,18 +154,18 @@ const ApplicationStatus = () => {
               </div>
 
               {isApproved && (
-                <div className="mt-4 flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div className="mt-5 p-4 bg-[#F0FDF4] dark:bg-[#0B2E1B] border border-[#86EFAC] dark:border-[#166534] rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="h-6 w-6 text-green-500 flex-shrink-0" />
+                    <CheckCircle className="h-6 w-6 text-[#22C55E] dark:text-[#4ADE80] flex-shrink-0" />
                     <div>
-                      <p className="font-semibold text-green-800 text-sm">🎉 Scholarship Approved!</p>
-                      <p className="text-xs text-green-600 mt-0.5">Your approval letter is ready to download.</p>
+                      <p className="font-bold text-[#15803D] dark:text-[#4ADE80] text-sm">Scholarship Approved!</p>
+                      <p className="text-xs text-[#15803D]/90 dark:text-[#4ADE80]/90 mt-0.5">Your official award letter is available for download.</p>
                     </div>
                   </div>
                   <button
                     onClick={handleDownload}
                     disabled={downloading}
-                    className="btn-primary bg-green-600 hover:bg-green-700 text-sm"
+                    className="btn-primary bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs px-4 py-2.5"
                     id="download-letter-btn"
                   >
                     {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -162,28 +175,28 @@ const ApplicationStatus = () => {
               )}
 
               {isRejected && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-red-800 text-sm">Application Rejected</p>
-                      {application.reviewerRemarks && (
-                        <p className="text-sm text-red-600 mt-1">{application.reviewerRemarks}</p>
-                      )}
-                      <p className="text-xs text-red-500 mt-2">
-                        For queries, contact: support@pmss.gov.in
-                      </p>
-                    </div>
+                <div className="mt-5 p-4 bg-red-50 dark:bg-[#121212] border border-red-200 dark:border-[#EF5350]/30 rounded-2xl flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-[#EF5350] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-red-900 dark:text-[#EF5350] text-sm">Application Needs Revision / Disapproved</p>
+                    {application.reviewerRemarks && (
+                      <p className="text-xs text-red-700 dark:text-[#E0E0E0] mt-1 font-medium">{application.reviewerRemarks}</p>
+                    )}
+                    <p className="text-xs text-gray-500 dark:text-[#BDBDBD] mt-2">
+                      Need help? Contact support at <a href="mailto:help@pmsss.gov.in" className="text-blue-600 dark:text-[#4FC3F7] underline">help@pmsss.gov.in</a>
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Timeline */}
+            {/* Timeline Stepper */}
             {!isRejected && (
-              <div className="card p-6">
-                <h2 className="text-sm font-semibold text-gray-700 mb-6">Application Timeline</h2>
-                <div className="space-y-0">
+              <div className="card p-6 sm:p-8 border border-gray-200 dark:border-[#333333]">
+                <h2 className="text-base font-bold text-[#0B1F3A] dark:text-white mb-6 font-display">
+                  Verification Timeline
+                </h2>
+                <div className="space-y-6">
                   {TIMELINE.map((step, i) => {
                     const done = i < currentIdx;
                     const active = i === currentIdx;
@@ -192,25 +205,33 @@ const ApplicationStatus = () => {
                       <div key={step.status} className="flex gap-4">
                         {/* Timeline indicator */}
                         <div className="flex flex-col items-center">
-                          <div className={`h-9 w-9 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                            done ? 'bg-primary border-primary text-white'
-                            : active ? 'border-primary text-primary bg-white shadow-[0_0_0_4px_rgba(37,99,235,0.1)]'
-                            : 'border-gray-200 text-gray-300'
+                          <div className={`h-10 w-10 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                            done ? 'bg-[#22C55E] border-[#22C55E] text-white dark:bg-[#0B2E1B] dark:border-[#166534] dark:text-[#4ADE80]'
+                            : active ? 'border-blue-600 text-blue-600 dark:border-[#4FC3F7] dark:text-[#4FC3F7] bg-blue-50 dark:bg-[#161616] ring-4 ring-blue-500/20'
+                            : 'border-gray-300 dark:border-[#333333] text-gray-400 dark:text-[#BDBDBD] bg-white dark:bg-[#161616]'
                           }`}>
-                            {done ? <CheckCircle className="h-4 w-4" /> : <Clock className={`h-4 w-4 ${active ? 'text-primary animate-pulse' : ''}`} />}
+                            {done ? <CheckCircle2 className="h-5 w-5" /> : <Clock className={`h-5 w-5 ${active ? 'animate-pulse' : ''}`} />}
                           </div>
                           {i < TIMELINE.length - 1 && (
-                            <div className={`w-0.5 h-10 my-0.5 ${done ? 'bg-primary' : 'bg-gray-100'}`} />
+                            <div className={`w-0.5 h-12 my-1 ${done ? 'bg-[#22C55E] dark:bg-[#166534]' : 'bg-gray-200 dark:bg-[#333333]'}`} />
                           )}
                         </div>
 
                         {/* Content */}
-                        <div className="pb-10 last:pb-0">
-                          <p className={`font-semibold text-sm ${active ? 'text-primary' : done ? 'text-gray-700' : 'text-gray-300'}`}>
-                            {step.label}
-                            {active && <span className="ml-2 text-xs bg-primary-50 text-primary px-2 py-0.5 rounded-full">Current</span>}
+                        <div className="pt-1 pb-4">
+                          <div className="flex items-center gap-3">
+                            <p className={`font-bold text-sm sm:text-base ${active ? 'text-blue-600 dark:text-[#4FC3F7]' : done ? 'text-[#0B1F3A] dark:text-white' : 'text-gray-400 dark:text-[#BDBDBD]'}`}>
+                              {step.label}
+                            </p>
+                            {active && (
+                              <span className="text-[10px] font-extrabold uppercase bg-blue-100 dark:bg-[#161616] text-blue-700 dark:text-[#4FC3F7] px-2 py-0.5 rounded border border-blue-200 dark:border-[#4FC3F7]/30">
+                                Current Stage
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs mt-1 leading-relaxed ${pending ? 'text-gray-400 dark:text-[#BDBDBD]' : 'text-gray-600 dark:text-[#E0E0E0]'}`}>
+                            {step.desc}
                           </p>
-                          <p className={`text-xs mt-0.5 ${pending ? 'text-gray-300' : 'text-gray-500'}`}>{step.desc}</p>
                         </div>
                       </div>
                     );
@@ -221,35 +242,13 @@ const ApplicationStatus = () => {
 
             {/* Reviewer Remarks */}
             {application.reviewerRemarks && !isRejected && (
-              <div className="card p-5">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  Reviewer Remarks
+              <div className="card p-6 border border-gray-200 dark:border-[#333333]">
+                <h2 className="text-sm font-bold text-[#0B1F3A] dark:text-white mb-3 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-blue-600 dark:text-[#4FC3F7]" />
+                  Officer Remarks
                 </h2>
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
+                <div className="bg-blue-50/70 dark:bg-[#161616] border border-blue-200 dark:border-[#4FC3F7]/30 rounded-xl p-4 text-xs text-gray-800 dark:text-[#E0E0E0]">
                   {application.reviewerRemarks}
-                </div>
-              </div>
-            )}
-
-            {/* Status History */}
-            {application.statusHistory?.length > 0 && (
-              <div className="card p-5">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  <Info className="h-4 w-4 text-gray-400" />
-                  Status History
-                </h2>
-                <div className="space-y-2">
-                  {[...application.statusHistory].reverse().map((h, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                      <StatusBadge status={h.status} />
-                      <span className="text-xs text-gray-400">
-                        {new Date(h.changedAt).toLocaleDateString('en-IN', {
-                          day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                        })}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             )}
@@ -261,3 +260,4 @@ const ApplicationStatus = () => {
 };
 
 export default ApplicationStatus;
+

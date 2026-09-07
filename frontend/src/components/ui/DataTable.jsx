@@ -24,17 +24,17 @@ const DataTable = ({
     : data;
 
   return (
-    <div className={`card overflow-hidden ${className}`}>
+    <div className={`card border border-gray-200 dark:border-[#333333] overflow-hidden ${className}`}>
       {searchable && (
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-gray-200 dark:border-[#333333] bg-white dark:bg-[#121212]">
           <div className="relative max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-[#BDBDBD]" />
             <input
               type="text"
               placeholder={searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="form-input pl-10 py-2.5 text-xs"
             />
           </div>
         </div>
@@ -64,10 +64,10 @@ const DataTable = ({
               ))
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="text-center py-16 text-gray-400 text-sm">
+                <td colSpan={columns.length} className="text-center py-16 text-gray-400 dark:text-[#BDBDBD] text-sm">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
-                      <Search className="h-6 w-6 text-gray-300" />
+                    <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-[#161616] flex items-center justify-center">
+                      <Search className="h-6 w-6 text-gray-400 dark:text-[#BDBDBD]" />
                     </div>
                     {emptyMessage}
                   </div>
@@ -77,7 +77,7 @@ const DataTable = ({
               filtered.map((row, idx) => (
                 <tr
                   key={row._id || idx}
-                  className={`hover:bg-gray-50 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`hover:bg-gray-50 dark:hover:bg-[#161616] transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick && onRowClick(row)}
                 >
                   {columns.map((col) => (
@@ -93,15 +93,15 @@ const DataTable = ({
       </div>
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50">
-          <p className="text-xs text-gray-500">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-[#333333] bg-gray-50 dark:bg-[#161616]">
+          <p className="text-xs text-gray-600 dark:text-[#BDBDBD]">
             Page {pagination.page} of {pagination.totalPages}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => pagination.onPageChange(1)}
               disabled={pagination.page === 1}
-              className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#1E1E1E] text-gray-700 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="First page"
             >
               <ChevronsLeft className="h-4 w-4" />
@@ -109,18 +109,18 @@ const DataTable = ({
             <button
               onClick={() => pagination.onPageChange(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#1E1E1E] text-gray-700 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Previous page"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="text-sm font-medium px-3 py-1 bg-primary text-white rounded-lg">
+            <span className="text-xs font-bold px-3 py-1 bg-blue-600 dark:bg-[#4FC3F7] text-white dark:text-black rounded-lg">
               {pagination.page}
             </span>
             <button
               onClick={() => pagination.onPageChange(pagination.page + 1)}
               disabled={pagination.page === pagination.totalPages}
-              className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#1E1E1E] text-gray-700 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Next page"
             >
               <ChevronRight className="h-4 w-4" />
@@ -128,7 +128,7 @@ const DataTable = ({
             <button
               onClick={() => pagination.onPageChange(pagination.totalPages)}
               disabled={pagination.page === pagination.totalPages}
-              className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-[#1E1E1E] text-gray-700 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Last page"
             >
               <ChevronsRight className="h-4 w-4" />
@@ -141,3 +141,4 @@ const DataTable = ({
 };
 
 export default DataTable;
+
