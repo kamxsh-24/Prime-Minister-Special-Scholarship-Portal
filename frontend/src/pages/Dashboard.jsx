@@ -87,6 +87,17 @@ const Dashboard = () => {
     }
   };
 
+  const handleMarkSingleRead = async (id) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/notifications/${id}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchNotifications();
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
   const handleDownloadLetter = async () => {
     if (!application?._id) return;
     try {
@@ -131,7 +142,12 @@ const Dashboard = () => {
   const currentStageIdx = getCurrentStageIndex();
 
   return (
-    <DashboardLayout unreadCount={unreadCount} onNotificationClick={handleMarkAllRead}>
+    <DashboardLayout
+      unreadCount={unreadCount}
+      notifications={notifications}
+      onMarkAllRead={handleMarkAllRead}
+      onMarkSingleRead={handleMarkSingleRead}
+    >
       <div className="space-y-6 sm:space-y-7">
         
         {/* SECTION 1 — PAGE TITLE */}

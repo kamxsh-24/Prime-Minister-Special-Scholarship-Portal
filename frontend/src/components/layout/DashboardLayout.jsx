@@ -3,7 +3,14 @@ import Sidebar from './Sidebar';
 import DashboardHeader from './DashboardHeader';
 import ChatbotWidget from '../ui/ChatbotWidget';
 
-const DashboardLayout = ({ children, unreadCount = 0, onNotificationClick }) => {
+const DashboardLayout = ({
+  children,
+  unreadCount = 0,
+  notifications = [],
+  onNotificationClick,
+  onMarkAllRead,
+  onMarkSingleRead,
+}) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen((p) => !p);
@@ -19,7 +26,9 @@ const DashboardLayout = ({ children, unreadCount = 0, onNotificationClick }) => 
         <DashboardHeader
           onMenuToggle={toggleSidebar}
           unreadCount={unreadCount}
-          onNotificationClick={onNotificationClick}
+          notifications={notifications}
+          onMarkAllRead={onMarkAllRead || onNotificationClick}
+          onMarkSingleRead={onMarkSingleRead}
         />
 
         {/* Main Content Area flowing naturally directly below the 64px top navbar */}

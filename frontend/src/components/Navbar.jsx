@@ -84,21 +84,21 @@ const Navbar = () => {
 
       {/* Profile & Logout */}
       <div className="flex items-center gap-4">
-        <div className="flex flex-col items-end">
+        <Link to={user.role === 'admin' ? '/admin' : '/dashboard/profile'} className="flex flex-col items-end hover:opacity-80 transition-opacity cursor-pointer">
           <div className="flex items-center gap-2">
-            <span className="text-white text-sm font-semibold">{user.name}</span>
+            <span className="text-white text-sm font-semibold">{user.fullName || user.name}</span>
             <span
               className={`text-[9px] px-2 py-0.5 border rounded-full font-mono uppercase font-bold tracking-wider ${
-                roleColors[user.role]
+                roleColors[user.role] || roleColors.viewer
               }`}
             >
               {user.role}
             </span>
           </div>
           <span className="text-[10px] text-gray-500 font-mono truncate max-w-[150px]">
-            {user.institution}
+            {user.institution || user.email}
           </span>
-        </div>
+        </Link>
 
         <div className="h-8 w-px bg-white/5" />
 
