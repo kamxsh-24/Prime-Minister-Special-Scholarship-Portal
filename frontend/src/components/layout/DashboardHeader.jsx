@@ -11,8 +11,8 @@ import { API_BASE_URL } from '../../services/apiBase';
 
 const DashboardHeader = ({
   onMenuToggle,
-  unreadCount = 0,
-  notifications = [],
+  unreadCount,
+  notifications,
   onMarkAllRead,
   onMarkSingleRead,
 }) => {
@@ -25,15 +25,18 @@ const DashboardHeader = ({
   const [fetchedNotifications, setFetchedNotifications] = useState([]);
   const [fetchedUnread, setFetchedUnread] = useState(0);
 
-  const headerRef = useRef(null);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
 
   const fullName = user?.fullName || 'Kamesh Kumar';
   const role = user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Student';
   const userInitial = fullName.charAt(0).toUpperCase();
 
+  const isParentManaged = notifications !== undefined || onMarkAllRead !== undefined || onMarkSingleRead !== undefined;
+
   // Auto-fetch notifications if not supplied by parent page
   useEffect(() => {
-    if (token && notifications.length === 0) {
+    if (!isParentManaged && token) {
       axios
         .get(`${API_BASE_URL}/notifications`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -46,16 +49,25 @@ const DashboardHeader = ({
         })
         .catch(() => {});
     }
-  }, [token, notifications.length]);
+  }, [token, isParentManaged]);
 
-  const activeNotifications = notifications.length > 0 ? notifications : fetchedNotifications;
-  const activeUnread = unreadCount || fetchedUnread || activeNotifications.filter((n) => !n.isRead).length;
+  const activeNotifications = isParentManaged
+    ? (notifications || [])
+    : (notifications && notifications.length > 0 ? notifications : fetchedNotifications);
+
+  const activeUnread = unreadCount !== undefined
+    ? unreadCount
+    : (isParentManaged
+        ? activeNotifications.filter((n) => !n.isRead).length
+        : (fetchedUnread || activeNotifications.filter((n) => !n.isRead).length));
 
   // Handle Click Outside & Escape Key
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (headerRef.current && !headerRef.current.contains(e.target)) {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
         setNotifOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
         setProfileOpen(false);
       }
     };
@@ -131,7 +143,6 @@ const DashboardHeader = ({
 
   return (
     <header
-      ref={headerRef}
       className="sticky top-0 z-30 h-16 w-full bg-white dark:bg-[#03070D] border-b border-[#E5E7EB] dark:border-[#132235] transition-colors duration-200 flex items-center px-4 sm:px-6 lg:px-8"
     >
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-3">
@@ -168,12 +179,13 @@ const DashboardHeader = ({
           <ThemeToggle />
 
           {/* Notification Bell Dropdown Area */}
-          <div className="relative">
+          <div ref={notifRef} className="relative">
             <button
               onClick={toggleNotif}
               id="header-notification-btn"
               className="relative p-2 rounded-xl text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F5F8FC] dark:hover:bg-[#07111C] dark:hover:text-white transition-colors flex-shrink-0 focus:outline-none"
               title="Notifications"
+              aria-label="Notifications"
               aria-expanded={notifOpen}
             >
               <Bell className="h-5 w-5" />
@@ -197,11 +209,12 @@ const DashboardHeader = ({
           <div className="h-6 w-[1px] bg-[#E5E7EB] dark:bg-[#132235] hidden sm:block" />
 
           {/* Student Profile Dropdown Area */}
-          <div className="relative">
+          <div ref={profileRef} className="relative">
             <button
               onClick={toggleProfile}
               id="header-profile-menu-btn"
               className="flex items-center gap-2 cursor-pointer p-1.5 rounded-xl hover:bg-[#F5F8FC] dark:hover:bg-[#07111C] transition-colors min-w-0 text-left focus:outline-none"
+              aria-label="Student profile menu"
               aria-expanded={profileOpen}
             >
               <div className="h-8 w-8 rounded-full bg-[#1769FF] text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">

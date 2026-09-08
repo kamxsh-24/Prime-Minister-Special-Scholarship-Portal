@@ -28,31 +28,32 @@ const DEFAULT_NOTIFICATIONS = [
 
 const NotificationDropdown = ({
   notifications = [],
-  unreadCount = 0,
+  unreadCount,
   onMarkAllRead,
   onMarkSingleRead,
   onClose,
 }) => {
-  const notifList = notifications.length > 0
-    ? notifications.map((n, idx) => {
-        let dotColor = 'bg-blue-500';
-        const msg = (n.message || n.title || '').toLowerCase();
-        if (msg.includes('success') || msg.includes('approved') || msg.includes('disbursed') || msg.includes('submitted')) {
-          dotColor = 'bg-emerald-500';
-        } else if (msg.includes('verify') || msg.includes('deadline') || msg.includes('reject') || msg.includes('warning') || msg.includes('action')) {
-          dotColor = 'bg-amber-500';
-        }
-        return {
-          ...n,
-          color: dotColor,
-        };
-      })
-    : DEFAULT_NOTIFICATIONS;
+  const isRealProvided = Array.isArray(notifications) && notifications.length > 0;
+  const rawList = isRealProvided ? notifications : (notifications ? notifications : DEFAULT_NOTIFICATIONS);
 
-  const totalUnread = unreadCount || notifList.filter((n) => !n.isRead).length;
+  const notifList = rawList.map((n) => {
+    let dotColor = 'bg-blue-500';
+    const msg = (n.message || n.title || '').toLowerCase();
+    if (msg.includes('success') || msg.includes('approved') || msg.includes('disbursed') || msg.includes('submitted')) {
+      dotColor = 'bg-emerald-500';
+    } else if (msg.includes('verify') || msg.includes('deadline') || msg.includes('reject') || msg.includes('warning') || msg.includes('action')) {
+      dotColor = 'bg-amber-500';
+    }
+    return {
+      ...n,
+      color: dotColor,
+    };
+  });
+
+  const totalUnread = unreadCount !== undefined ? unreadCount : notifList.filter((n) => !n.isRead).length;
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return '20 May 2026';
+    if (!dateStr) return '';
     try {
       return new Date(dateStr).toLocaleDateString('en-GB', {
         day: 'numeric',
@@ -67,7 +68,6 @@ const NotificationDropdown = ({
   return (
     <div
       className="absolute right-0 top-full mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#07111C] border border-[#E2E8F0] dark:border-[#162338] rounded-2xl shadow-xl z-50 overflow-hidden text-[#0F2A5F] dark:text-[#F8FAFC] transition-all duration-150 animate-in fade-in slide-in-from-top-2"
-      onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
       <div className="px-4 py-3 border-b border-[#E2E8F0] dark:border-[#162338] flex items-center justify-between bg-[#F8FAFC]/50 dark:bg-[#0A1828]/50">
@@ -86,7 +86,7 @@ const NotificationDropdown = ({
             onClick={() => {
               onMarkAllRead();
             }}
-            className="text-[11px] font-semibold text-[#1769FF] hover:underline flex items-center gap-1 focus:outline-none"
+            className="text-[11px] font-semibold text-[#1769FF] hover:underline flex items-center gap-1 focus:outline-none cursor-pointer"
           >
             <CheckCheck className="h-3.5 w-3.5" />
             Mark all read
@@ -107,7 +107,14 @@ const NotificationDropdown = ({
             return (
               <div
                 key={id}
+                onClick={() => {
+                  if (!item.isRead && onMarkSingleRead) {
+                    onMarkSingleRead(id);
+                  }
+                }}
                 className={`p-3.5 flex items-start gap-3 transition-colors ${
+                  !item.isRead ? 'cursor-pointer' : ''
+                } ${
                   item.isRead
                     ? 'bg-transparent hover:bg-[#F1F6FF] dark:hover:bg-[#0D1B2A]'
                     : 'bg-[#F1F6FF]/60 dark:bg-[#0D1B2A]/60 hover:bg-[#F1F6FF] dark:hover:bg-[#0D1B2A]'
@@ -120,9 +127,11 @@ const NotificationDropdown = ({
                   <p className="text-xs sm:text-sm font-medium text-[#0F2A5F] dark:text-[#F8FAFC] leading-snug">
                     {item.message || item.title}
                   </p>
-                  <p className="text-[11px] text-gray-400 dark:text-[#94A3B8] mt-1 font-mono">
-                    {formatDate(item.createdAt || item.date)}
-                  </p>
+                  {formatDate(item.createdAt || item.date) && (
+                    <p className="text-[11px] text-gray-400 dark:text-[#94A3B8] mt-1 font-mono">
+                      {formatDate(item.createdAt || item.date)}
+                    </p>
+                  )}
                 </div>
 
                 {!item.isRead && onMarkSingleRead && (
@@ -131,7 +140,7 @@ const NotificationDropdown = ({
                       e.stopPropagation();
                       onMarkSingleRead(id);
                     }}
-                    className="text-[10px] font-semibold text-[#1769FF] hover:underline flex-shrink-0 focus:outline-none"
+                    className="text-[10px] font-semibold text-[#1769FF] hover:underline flex-shrink-0 focus:outline-none cursor-pointer"
                     title="Mark as read"
                   >
                     Mark read

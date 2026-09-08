@@ -10,7 +10,6 @@ const ProfileDropdown = ({ user, onLogout, onClose }) => {
   return (
     <div
       className="absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#07111C] border border-[#E2E8F0] dark:border-[#162338] rounded-2xl shadow-xl z-50 overflow-hidden text-[#0F2A5F] dark:text-[#F8FAFC] transition-all duration-150 animate-in fade-in slide-in-from-top-2"
-      onClick={(e) => e.stopPropagation()}
     >
       {/* User Header */}
       <div className="px-4 py-3 border-b border-[#E2E8F0] dark:border-[#162338] flex items-center gap-3 bg-[#F8FAFC]/50 dark:bg-[#0A1828]/50">

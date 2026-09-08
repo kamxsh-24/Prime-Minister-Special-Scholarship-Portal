@@ -5,9 +5,8 @@ import ChatbotWidget from '../ui/ChatbotWidget';
 
 const DashboardLayout = ({
   children,
-  unreadCount = 0,
-  notifications = [],
-  onNotificationClick,
+  unreadCount,
+  notifications,
   onMarkAllRead,
   onMarkSingleRead,
 }) => {
@@ -27,7 +26,7 @@ const DashboardLayout = ({
           onMenuToggle={toggleSidebar}
           unreadCount={unreadCount}
           notifications={notifications}
-          onMarkAllRead={onMarkAllRead || onNotificationClick}
+          onMarkAllRead={onMarkAllRead}
           onMarkSingleRead={onMarkSingleRead}
         />
 
