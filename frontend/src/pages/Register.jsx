@@ -115,7 +115,6 @@ const Register = () => {
   const stepperItems = [
     { num: '01', title: 'Account Details' },
     { num: '02', title: 'Personal Information' },
-    { num: '03', title: 'Review & Submit' },
   ];
 
   return (

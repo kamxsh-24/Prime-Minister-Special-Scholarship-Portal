@@ -31,10 +31,6 @@ import {
 const TABS = [
   { id: 'personal', label: 'Personal Details', icon: User },
   { id: 'address', label: 'Address Info', icon: MapPin },
-  { id: 'academic', label: 'Academic Info', icon: GraduationCap },
-  { id: 'family', label: 'Family & Income', icon: Users },
-  { id: 'bank', label: 'Bank Details', icon: Landmark },
-  { id: 'documents', label: 'Documents', icon: FileText },
 ];
 
 const STATES = [
@@ -214,30 +210,6 @@ const MyProfile = () => {
       { field: 'address.district', path: 'address.district', message: 'District is required.' },
       { field: 'address.pincode', path: 'address.pincode', message: 'Pincode is required.' },
     ],
-    academic: [
-      { field: 'collegeName', path: 'collegeName', message: 'College / Institution is required.' },
-      { field: 'universityName', path: 'universityName', message: 'Affiliated University is required.' },
-      { field: 'degree', path: 'degree', message: 'Degree is required.' },
-      { field: 'department', path: 'department', message: 'Department is required.' },
-      { field: 'yearOfStudy', path: 'yearOfStudy', message: 'Year of Study is required.' },
-      { field: 'rollNumber', path: 'rollNumber', message: 'Roll Number is required.' },
-      { field: 'academicYear', path: 'academicYear', message: 'Academic Year is required.' },
-      { field: 'cgpa', path: 'cgpa', message: 'CGPA / Percentage is required.' },
-    ],
-    family: [
-      { field: 'fatherName', path: 'fatherName', message: 'Father\'s Name is required.' },
-      { field: 'motherName', path: 'motherName', message: 'Mother\'s Name is required.' },
-      { field: 'parentOccupation', path: 'parentOccupation', message: 'Parent Occupation is required.' },
-      { field: 'familyIncome', path: 'familyIncome', message: 'Family Income is required.' },
-    ],
-    bank: [
-      { field: 'accountHolderName', path: 'accountHolderName', message: 'Account Holder Name is required.' },
-      { field: 'bankName', path: 'bankName', message: 'Bank Name is required.' },
-      { field: 'branchName', path: 'branchName', message: 'Branch Name is required.' },
-      { field: 'accountNumber', path: 'accountNumber', message: 'Account Number is required.' },
-      { field: 'ifscCode', path: 'ifscCode', message: 'IFSC Code is required.' },
-    ],
-    documents: [],
   };
 
   const validateCurrentSection = (data = profileData, section = activeTab) => {
@@ -272,13 +244,6 @@ const MyProfile = () => {
       }
     }
 
-    if (section === 'bank' && data.ifscCode?.trim()) {
-      const regex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-      if (!regex.test(data.ifscCode.toUpperCase())) {
-        errors.ifscCode = 'IFSC format is incorrect (e.g. SBIN0001234).';
-      }
-    }
-
     console.log(`[profile-validation][${section}]`, errors);
     setValidationErrors(errors);
     return errors;
@@ -288,15 +253,6 @@ const MyProfile = () => {
     const fields = [
       profileData.fullName, profileData.dob, profileData.gender, profileData.category, profileData.phone, profileData.email, profileData.aadhaar, profileData.bloodGroup, profileData.nationality,
       profileData.address?.permanentAddress, profileData.address?.currentAddress, profileData.address?.state, profileData.address?.district, profileData.address?.pincode,
-      profileData.collegeName, profileData.universityName, profileData.degree, profileData.department, profileData.yearOfStudy, profileData.rollNumber, profileData.academicYear, profileData.cgpa,
-      profileData.fatherName, profileData.motherName, profileData.parentOccupation, profileData.familyIncome,
-      profileData.bankName, profileData.accountHolderName, profileData.accountNumber, profileData.ifscCode, profileData.branchName,
-      profileData.profilePhoto || selectedFiles.photo,
-      profileData.documents?.aadhaar || selectedFiles.aadhaar,
-      profileData.documents?.incomeCertificate || selectedFiles.incomeCertificate,
-      profileData.documents?.casteCertificate || selectedFiles.casteCertificate,
-      profileData.documents?.marksheet || selectedFiles.marksheet,
-      profileData.documents?.bankPassbook || selectedFiles.bankPassbook
     ];
     const filled = fields.filter(f => f !== undefined && f !== null && String(f).trim() !== '').length;
     return Math.round((filled / fields.length) * 100);
@@ -678,236 +634,6 @@ const MyProfile = () => {
                     </div>
                   </div>
                 )}
-
-                {/* 3. ACADEMIC INFO */}
-                {activeTab === 'academic' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Academic Profile</h3>
-                    
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="collegeName" className="text-xs font-semibold text-gray-500 mb-1 block">College / Institution *</label>
-                        <input
-                          type="text" id="collegeName" name="collegeName" placeholder="College Name"
-                          value={profileData.collegeName} onChange={handleFieldChange} className={getFieldClassName('collegeName', 'form-input')} required
-                        />
-                        {renderValidationMessage('collegeName')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="universityName" className="text-xs font-semibold text-gray-500 mb-1 block">Affiliated University *</label>
-                        <input
-                          type="text" id="universityName" name="universityName" placeholder="University Name"
-                          value={profileData.universityName} onChange={handleFieldChange} className={getFieldClassName('universityName', 'form-input')} required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="degree" className="text-xs font-semibold text-gray-500 mb-1 block">Degree (Course Level) *</label>
-                        <input
-                          type="text" id="degree" name="degree" placeholder="Degree (e.g. B.Tech / B.Sc)"
-                          value={profileData.degree} onChange={handleFieldChange} className={getFieldClassName('degree', 'form-input')} required
-                        />
-                        {renderValidationMessage('degree')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="department" className="text-xs font-semibold text-gray-500 mb-1 block">Branch / Department *</label>
-                        <input
-                          type="text" id="department" name="department" placeholder="Department"
-                          value={profileData.department} onChange={handleFieldChange} className={getFieldClassName('department', 'form-input')} required
-                        />
-                        {renderValidationMessage('department')}
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-4 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="yearOfStudy" className="text-xs font-semibold text-gray-500 mb-1 block">Year *</label>
-                        <select
-                          id="yearOfStudy" name="yearOfStudy" value={profileData.yearOfStudy} onChange={handleFieldChange}
-                          className={getFieldClassName('yearOfStudy', 'form-select')} required
-                        >
-                          <option value="">Year</option>
-                          <option value="1st Year">1st Year</option>
-                          <option value="2nd Year">2nd Year</option>
-                          <option value="3rd Year">3rd Year</option>
-                          <option value="4th Year">4th Year</option>
-                          <option value="5th Year">5th Year</option>
-                        </select>
-                        {renderValidationMessage('yearOfStudy')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="rollNumber" className="text-xs font-semibold text-gray-500 mb-1 block">Roll/Reg No *</label>
-                        <input
-                          type="text" id="rollNumber" name="rollNumber" placeholder="Roll Number"
-                          value={profileData.rollNumber} onChange={handleFieldChange} className={getFieldClassName('rollNumber', 'form-input')} required
-                        />
-                        {renderValidationMessage('rollNumber')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="academicYear" className="text-xs font-semibold text-gray-500 mb-1 block">Acad Year (e.g. 2024-25) *</label>
-                        <input
-                          type="text" id="academicYear" name="academicYear" placeholder="Academic Year"
-                          value={profileData.academicYear} onChange={handleFieldChange} className={getFieldClassName('academicYear', 'form-input')} required
-                        />
-                        {renderValidationMessage('academicYear')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="cgpa" className="text-xs font-semibold text-gray-500 mb-1 block">CGPA / % *</label>
-                        <input
-                          type="number" step="0.01" id="cgpa" name="cgpa" placeholder="CGPA / Percentage"
-                          value={profileData.cgpa} onChange={handleFieldChange} className={getFieldClassName('cgpa', 'form-input')} required min="0" max="100"
-                        />
-                        {renderValidationMessage('cgpa')}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. FAMILY INFO */}
-                {activeTab === 'family' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Family Information</h3>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="fatherName" className="text-xs font-semibold text-gray-500 mb-1 block">Father's Name *</label>
-                        <input
-                          type="text" id="fatherName" name="fatherName" placeholder="Father Name"
-                          value={profileData.fatherName} onChange={handleFieldChange} className={getFieldClassName('fatherName', 'form-input')} required
-                        />
-                        {renderValidationMessage('fatherName')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="motherName" className="text-xs font-semibold text-gray-500 mb-1 block">Mother's Name *</label>
-                        <input
-                          type="text" id="motherName" name="motherName" placeholder="Mother Name"
-                          value={profileData.motherName} onChange={handleFieldChange} className={getFieldClassName('motherName', 'form-input')} required
-                        />
-                        {renderValidationMessage('motherName')}
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="parentOccupation" className="text-xs font-semibold text-gray-500 mb-1 block">Parent's Occupation *</label>
-                        <input
-                          type="text" id="parentOccupation" name="parentOccupation" placeholder="Parent Occupation"
-                          value={profileData.parentOccupation} onChange={handleFieldChange} className={getFieldClassName('parentOccupation', 'form-input')} required
-                        />
-                        {renderValidationMessage('parentOccupation')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="familyIncome" className="text-xs font-semibold text-gray-500 mb-1 block">Annual Family Income *</label>
-                        <input
-                          type="number" id="familyIncome" name="familyIncome" placeholder="Annual Family Income"
-                          value={profileData.familyIncome} onChange={handleFieldChange} className={getFieldClassName('familyIncome', 'form-input')} required
-                        />
-                        {renderValidationMessage('familyIncome')}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. BANK INFO */}
-                {activeTab === 'bank' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Bank Details</h3>
-                    <div className="space-y-1">
-                      <label htmlFor="accountHolderName" className="text-xs font-semibold text-gray-500 mb-1 block">Account Holder Name *</label>
-                      <input
-                        type="text" id="accountHolderName" name="accountHolderName" placeholder="Account Holder Name"
-                        value={profileData.accountHolderName} onChange={handleFieldChange} className={getFieldClassName('accountHolderName', 'form-input')} required
-                      />
-                      {renderValidationMessage('accountHolderName')}
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="bankName" className="text-xs font-semibold text-gray-500 mb-1 block">Bank Name *</label>
-                        <input
-                          type="text" id="bankName" name="bankName" placeholder="Bank Name"
-                          value={profileData.bankName} onChange={handleFieldChange} className={getFieldClassName('bankName', 'form-input')} required
-                        />
-                        {renderValidationMessage('bankName')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="branchName" className="text-xs font-semibold text-gray-500 mb-1 block">Branch Name *</label>
-                        <input
-                          type="text" id="branchName" name="branchName" placeholder="Branch Name"
-                          value={profileData.branchName} onChange={handleFieldChange} className={getFieldClassName('branchName', 'form-input')} required
-                        />
-                        {renderValidationMessage('branchName')}
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label htmlFor="accountNumber" className="text-xs font-semibold text-gray-500 mb-1 block">Account Number *</label>
-                        <input
-                          type="text" id="accountNumber" name="accountNumber" placeholder="Account Number"
-                          value={profileData.accountNumber} onChange={handleFieldChange} className={getFieldClassName('accountNumber', 'form-input')} required
-                        />
-                        {renderValidationMessage('accountNumber')}
-                      </div>
-                      <div className="space-y-1">
-                        <label htmlFor="ifscCode" className="text-xs font-semibold text-gray-500 mb-1 block">Bank IFSC Code *</label>
-                        <input
-                          type="text" id="ifscCode" name="ifscCode" placeholder="IFSC Code"
-                          value={profileData.ifscCode} onChange={handleFieldChange} className={getFieldClassName('ifscCode', 'form-input')} required
-                        />
-                        {renderValidationMessage('ifscCode')}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 6. DOCUMENTS */}
-                {activeTab === 'documents' && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-gray-900 border-b pb-2">Documents & Photo Upload</h3>
-                    
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <DocumentUploadCard
-                        label="Profile Photo *" fieldName="photo" hint="JPG or PNG format, max 2MB"
-                        value={profileData.profilePhoto} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.photo?.status}
-                        remarks={profileData.documentStatuses?.photo?.remarks}
-                      />
-                      <DocumentUploadCard
-                        label="Aadhaar Card PDF *" fieldName="aadhaar" hint="PDF only, max 2MB"
-                        value={profileData.documents.aadhaar} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.aadhaar?.status}
-                        remarks={profileData.documentStatuses?.aadhaar?.remarks}
-                      />
-                      <DocumentUploadCard
-                        label="Income Certificate PDF *" fieldName="incomeCertificate" hint="PDF only, max 2MB"
-                        value={profileData.documents.incomeCertificate} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.incomeCertificate?.status}
-                        remarks={profileData.documentStatuses?.incomeCertificate?.remarks}
-                      />
-                      <DocumentUploadCard
-                        label="Marksheet PDF *" fieldName="marksheet" hint="PDF only, max 2MB"
-                        value={profileData.documents.marksheet} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.marksheet?.status}
-                        remarks={profileData.documentStatuses?.marksheet?.remarks}
-                      />
-                      <DocumentUploadCard
-                        label="Bank Passbook / Cheque PDF *" fieldName="bankPassbook" hint="PDF only, max 2MB"
-                        value={profileData.documents.bankPassbook} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.bankPassbook?.status}
-                        remarks={profileData.documentStatuses?.bankPassbook?.remarks}
-                      />
-                      <DocumentUploadCard
-                        label="Caste/Community Certificate PDF" fieldName="casteCertificate" hint="PDF only, max 2MB"
-                        value={profileData.documents.casteCertificate} onChange={handleDocChange}
-                        status={profileData.documentStatuses?.casteCertificate?.status}
-                        remarks={profileData.documentStatuses?.casteCertificate?.remarks}
-                      />
-                    </div>
-                  </div>
-                )}
-
               </div>
 
               {/* Form Actions Footer */}

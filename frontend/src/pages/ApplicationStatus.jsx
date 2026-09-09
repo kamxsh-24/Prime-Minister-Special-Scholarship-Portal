@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 
 const TIMELINE = [
-  { status: 'submitted',            label: 'Registration & Submission', desc: 'Your application has been successfully submitted.' },
+  { status: 'draft',                 label: 'Registration & Application', desc: 'Complete and save all required application sections.' },
+  { status: 'submitted',            label: 'Application Submission',     desc: 'Your application has been successfully submitted.' },
   { status: 'institution_verified',  label: 'Institute Verification',     desc: 'Your college or institution nodal officer has verified your registration details.' },
   { status: 'under_review',          label: 'Officer Verification',       desc: 'State and nodal scholarship officers are reviewing your documents.' },
   { status: 'approved',              label: 'Final Decision & Approval',  desc: 'Congratulations! Your scholarship application has been officially approved.' },
@@ -77,11 +78,13 @@ const ApplicationStatus = () => {
   };
 
   const getStepIndex = (status) => {
+    if (!status || status === 'draft') return 0;
     const idx = TIMELINE.findIndex((t) => t.status === status);
-    return idx === -1 ? -1 : idx;
+    return idx === -1 ? 0 : idx;
   };
 
-  const currentIdx = application ? getStepIndex(application.status) : -1;
+  const currentIdx = application ? getStepIndex(application.status) : 0;
+  const isDraft = !application || application?.status === 'draft';
   const isRejected = application?.status === 'rejected';
   const isApproved = application?.status === 'approved' || application?.status === 'disbursed';
 
@@ -99,18 +102,42 @@ const ApplicationStatus = () => {
 
         {loading ? (
           <SkeletonCard />
-        ) : !application ? (
-          <div className="card p-10 text-center border border-gray-200 dark:border-[#333333]">
-            <div className="h-16 w-16 bg-blue-50 dark:bg-[#161616] text-blue-600 dark:text-[#4FC3F7] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 dark:border-[#333333]">
-              <FileText className="h-8 w-8" />
+        ) : !application || isDraft ? (
+          <div className="card p-8 border border-gray-200 dark:border-[#333333] space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <p className="text-xs font-semibold text-gray-400 dark:text-[#BDBDBD] uppercase tracking-wider mb-1">
+                  Current Application Status
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 font-bold text-xs rounded-full border border-amber-300 dark:border-amber-800">
+                    Application Incomplete
+                  </span>
+                  {application?._id && (
+                    <span className="text-xs font-mono font-bold text-gray-600 dark:text-[#E0E0E0]">
+                      ID: PMSSS-2026-{application._id.slice(-6).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <Link
+                to="/dashboard/application"
+                className="btn-primary text-xs px-5 py-2.5 flex items-center gap-2"
+              >
+                Continue Application <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-            <h2 className="font-extrabold text-[#0B1F3A] dark:text-white text-lg mb-2">No Application Found</h2>
-            <p className="text-xs text-gray-500 dark:text-[#BDBDBD] mb-6 max-w-sm mx-auto">
-              You haven't submitted a PMSSS scholarship application yet.
-            </p>
-            <Link to="/dashboard/application" className="btn-primary">
-              Start Application <ArrowRight className="h-4 w-4" />
-            </Link>
+
+            <div className="p-4 bg-amber-50 dark:bg-[#1E170C] border border-amber-200 dark:border-amber-800/40 rounded-2xl space-y-3">
+              <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
+                <Info className="h-4 w-4 shrink-0 text-amber-600" />
+                Action Required: Complete Application Form
+              </div>
+              <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                Your application has not been submitted yet. Please complete all required sections (Personal, Address, Academic, Family & Income, Bank Details, and Documents) before final submission.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">

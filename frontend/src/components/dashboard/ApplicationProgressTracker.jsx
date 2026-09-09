@@ -1,17 +1,20 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 
-const STEPS = [
-  { id: 1, name: 'Registration', statusText: 'Completed', key: 'registration' },
-  { id: 2, name: 'Profile', statusText: 'Completed', key: 'profile' },
-  { id: 3, name: 'Documents', statusText: 'Submitted', key: 'documents' },
-  { id: 4, name: 'Institute Verification', statusText: 'In Progress', key: 'institute' },
-  { id: 5, name: 'Officer Verification', statusText: 'Pending', key: 'officer' },
-  { id: 6, name: 'Final Decision', statusText: 'Pending', key: 'decision' },
-];
+const ApplicationProgressTracker = ({ currentStepIndex = 1, profile, application }) => {
+  const isProfileDone = (profile?.completionPercentage || 0) >= 80;
+  const isAppSubmitted = application?.status && application.status !== 'draft';
+  const isInstDone = ['institution_verified', 'under_review', 'approved', 'disbursed'].includes(application?.status);
+  const isOfficerDone = ['approved', 'disbursed'].includes(application?.status);
 
-const ApplicationProgressTracker = ({ currentStepIndex = 3 }) => {
-  // currentStepIndex: 0-indexed. E.g., 3 means step 4 (Institute Verification) is active.
+  const STEPS = [
+    { id: 1, name: 'Registration', statusText: 'Completed', key: 'registration' },
+    { id: 2, name: 'Profile', statusText: isProfileDone ? 'Completed' : 'In Progress', key: 'profile' },
+    { id: 3, name: 'Documents', statusText: isAppSubmitted ? 'Submitted' : 'Pending', key: 'documents' },
+    { id: 4, name: 'Institute Verification', statusText: isInstDone ? 'Completed' : isAppSubmitted ? 'Active' : 'Pending', key: 'institute' },
+    { id: 5, name: 'Officer Verification', statusText: isOfficerDone ? 'Completed' : isInstDone ? 'Active' : 'Pending', key: 'officer' },
+    { id: 6, name: 'Final Decision', statusText: isOfficerDone ? 'Approved' : 'Pending', key: 'decision' },
+  ];
 
   return (
     <div className="bg-white dark:bg-[#080808] border border-gray-200/80 dark:border-[#1A1A1A] rounded-2xl p-5 sm:p-7 shadow-sm transition-colors">

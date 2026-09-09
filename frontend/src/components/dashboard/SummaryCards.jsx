@@ -3,16 +3,16 @@ import { FileText, Clock, CheckCircle2, FileCheck } from 'lucide-react';
 
 const SummaryCards = ({
   applicationId,
-  status = 'In Progress',
-  profileCompletion = 85,
-  uploadedDocs = 6,
+  status = 'Not Started',
+  profileCompletion = 0,
+  uploadedDocs = 0,
   totalDocs = 6,
 }) => {
   const formattedAppId = applicationId
     ? applicationId.startsWith('PMSSS-')
       ? applicationId
       : `PMSSS-2026-${applicationId.slice(-6).toUpperCase()}`
-    : 'PMSSS-2026-000123';
+    : 'Not Created';
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

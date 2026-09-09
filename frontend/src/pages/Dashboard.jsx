@@ -120,23 +120,31 @@ const Dashboard = () => {
     }
   };
 
-  const appStatus = application?.status || 'draft';
-  const isApproved = ['approved', 'disbursed'].includes(appStatus);
+  const appStatus = application ? application.status : 'Not Started';
+  const isApproved = ['approved', 'disbursed'].includes(application?.status);
 
-  const uploadedDocsCount = profile?.documents
-    ? Object.values(profile.documents).filter(Boolean).length
-    : 6;
+  // Merge profile and application documents to count actual uploaded files
+  const combinedDocs = {
+    ...(profile?.documents || {}),
+    ...(application?.documents || {}),
+  };
+  if (profile?.profilePhoto) combinedDocs.photo = profile.profilePhoto;
+
+  const docKeys = ['aadhaar', 'incomeCertificate', 'casteCertificate', 'marksheet', 'bankPassbook', 'photo'];
+  const uploadedDocsCount = docKeys.filter((k) => combinedDocs[k] && String(combinedDocs[k]).trim() !== '').length;
   const totalRequiredDocs = 6;
-  const profileCompletion = profile?.completionPercentage || 85;
+  const profileCompletion = profile?.completionPercentage || 0;
 
   const getCurrentStageIndex = () => {
-    if (!application) return 3;
-    if (appStatus === 'draft') return 1;
-    if (appStatus === 'submitted') return 2;
-    if (appStatus === 'institution_verified') return 3;
-    if (appStatus === 'under_review') return 4;
-    if (appStatus === 'approved' || appStatus === 'disbursed') return 5;
-    return 3;
+    if (!application || application.status === 'draft') {
+      // Registration completed (0), Profile / Application in progress (1)
+      return 1;
+    }
+    if (application.status === 'submitted') return 3; // Institute Verification active
+    if (application.status === 'institution_verified') return 4; // Officer Verification active
+    if (application.status === 'under_review') return 4;
+    if (application.status === 'approved' || application.status === 'disbursed') return 5;
+    return 1;
   };
 
   const currentStageIdx = getCurrentStageIndex();
@@ -162,7 +170,7 @@ const Dashboard = () => {
 
         {/* Award Letter Download Notice (If Approved) */}
         {application && isApproved && (
-          <div className="bg-[#F0FDF4] dark:bg-[#051F10] border border-[#86EFAC] dark:border-[#22C55E]/30 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-4">
+          <div id="award-letter-notice-banner" className="bg-[#F0FDF4] dark:bg-[#051F10] border border-[#86EFAC] dark:border-[#22C55E]/30 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] dark:bg-[#22C55E] animate-pulse" />
               <p className="text-xs sm:text-sm font-semibold text-[#15803D] dark:text-[#22C55E]">
@@ -170,6 +178,7 @@ const Dashboard = () => {
               </p>
             </div>
             <button
+              id="award-letter-download-btn"
               onClick={handleDownloadLetter}
               disabled={downloading}
               className="bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 transition-colors flex-shrink-0"
@@ -181,7 +190,7 @@ const Dashboard = () => {
         )}
 
         {/* SECTION 2 — WELCOME BANNER */}
-        <WelcomeBanner studentName={fullName} />
+        <WelcomeBanner studentName={fullName} application={application} />
 
         {/* SECTION 3 — APPLICATION SUMMARY */}
         <SummaryCards
@@ -193,7 +202,7 @@ const Dashboard = () => {
         />
 
         {/* SECTION 4 — APPLICATION PROGRESS */}
-        <ApplicationProgressTracker currentStepIndex={currentStageIdx} />
+        <ApplicationProgressTracker currentStepIndex={currentStageIdx} profile={profile} application={application} />
 
         {/* SECTION 5 — THREE INFORMATION PANELS */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 lg:gap-6">
@@ -203,7 +212,7 @@ const Dashboard = () => {
             unreadCount={unreadCount}
             onMarkRead={handleMarkAllRead}
           />
-          <MyDocumentsSection />
+          <MyDocumentsSection profile={profile} application={application} onRefresh={fetchProfile} />
         </div>
 
         {/* SECTION 6 — QUICK ACTIONS */}

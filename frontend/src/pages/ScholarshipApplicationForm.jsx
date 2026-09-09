@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import ProgressSteps from '../components/ui/ProgressSteps';
 import DocumentUploadCard from '../components/ui/DocumentUploadCard';
@@ -10,16 +9,16 @@ import { applicationSuccess } from '../store/slices/applicationSlice';
 import { profileSuccess } from '../store/slices/profileSlice';
 import { getApplication, createApplication, updateApplication, getProfile } from '../services/studentService';
 import { uploadDocuments } from '../services/documentService';
-import { API_BASE_URL } from '../services/apiBase';
-import { ChevronRight, ChevronLeft, Save, Send, Eye, Loader2, Sparkles, CheckCircle2, XCircle, Info, Landmark, Lock, User } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, Send, Eye, Loader2, Sparkles, CheckCircle2, XCircle, Info, Landmark } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 
 const STEPS = [
-  { label: 'Personal' },
-  { label: 'Academic' },
-  { label: 'Bank' },
-  { label: 'Documents' },
-  { label: 'Preview' },
+  { label: '01 Personal' },
+  { label: '02 Address' },
+  { label: '03 Academic' },
+  { label: '04 Family & Income' },
+  { label: '05 Bank Details' },
+  { label: '06 Documents' },
 ];
 
 const STATES = [
@@ -31,16 +30,26 @@ const STATES = [
 
 const initialPersonal = {
   fullName: '', dateOfBirth: '', gender: '', religion: '', category: '',
-  aadhaarNumber: '', phone: '', email: '', permanentAddress: '', state: '', district: '',
-  annualIncome: '',
+  aadhaarNumber: '', phone: '', email: '',
 };
+
+const initialAddress = {
+  permanentAddress: '', currentAddress: '', state: '', district: '', pincode: '',
+};
+
 const initialAcademic = {
-  institutionName: '', institutionAddress: '', courseName: '', yearOfStudy: '',
-  rollNumber: '', previousYearMarks: '', boardUniversityName: '',
+  institutionName: '', institutionAddress: '', courseName: '', department: '', yearOfStudy: '',
+  rollNumber: '', boardUniversityName: '', previousYearMarks: '', academicYear: '',
 };
+
+const initialFamily = {
+  fatherName: '', motherName: '', parentOccupation: '', annualIncome: '',
+};
+
 const initialBank = {
   accountHolderName: '', bankName: '', branchName: '', accountNumber: '', ifscCode: '',
 };
+
 const initialDocs = {
   aadhaar: null, incomeCertificate: null, casteCertificate: null, marksheet: null,
   bankPassbook: null, bonafide: null, photo: null,
@@ -75,24 +84,21 @@ const ScholarshipApplicationForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, token } = useSelector((s) => s.auth);
   const { application } = useSelector((s) => s.application);
   const { profile: reduxProfile } = useSelector((s) => s.profile);
 
   const [step, setStep] = useState(0);
   const [personal, setPersonal] = useState(initialPersonal);
+  const [address, setAddress]   = useState(initialAddress);
   const [academic, setAcademic] = useState(initialAcademic);
-  const [bank, setBank]     = useState(initialBank);
-  const [docs, setDocs]     = useState(initialDocs);
-  const [appId, setAppId]   = useState(null);
-  const [saving, setSaving] = useState(false);
+  const [family, setFamily]     = useState(initialFamily);
+  const [bank, setBank]         = useState(initialBank);
+  const [docs, setDocs]         = useState(initialDocs);
+  const [appId, setAppId]       = useState(null);
+  const [saving, setSaving]     = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // OCR state
-  const [ocrLoading, setOcrLoading] = useState({});
-  const [ocrData, setOcrData] = useState(null);
-
-  // Student Profile Integration State
+  const [ocrData] = useState(null);
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
 
@@ -134,58 +140,44 @@ const ScholarshipApplicationForm = () => {
     }
   }, [reduxProfile]);
 
-  useEffect(() => {
-    const refreshProfileOnUpdate = async () => {
-      try {
-        const res = await getProfile();
-        if (res.data.success && res.data.data) {
-          setProfile(res.data.data);
-          dispatch(profileSuccess({ data: res.data.data, exists: true }));
-        }
-      } catch (err) {
-        console.error('Failed to refresh profile after update:', err);
-      }
-    };
-
-    window.addEventListener('pmsss-profile-updated', refreshProfileOnUpdate);
-    return () => window.removeEventListener('pmsss-profile-updated', refreshProfileOnUpdate);
-  }, [dispatch]);
-
   // Pre-fill from student profile when loaded
   useEffect(() => {
     if (profile) {
       setPersonal((p) => ({
-        ...p,
         fullName: p.fullName || profile.fullName || '',
         dateOfBirth: p.dateOfBirth || (profile.dob ? new Date(profile.dob).toISOString().split('T')[0] : ''),
         gender: p.gender || profile.gender || '',
+        religion: p.religion || '',
         category: p.category || profile.category || '',
         aadhaarNumber: p.aadhaarNumber || profile.aadhaar || '',
         phone: p.phone || profile.phone || '',
         email: p.email || profile.email || '',
-        permanentAddress: p.permanentAddress || profile.address?.permanentAddress || '',
-        currentAddress: p.currentAddress || profile.address?.currentAddress || '',
-        state: p.state || profile.address?.state || '',
-        district: p.district || profile.address?.district || '',
-        pincode: p.pincode || profile.address?.pincode || '',
-        fatherName: p.fatherName || profile.fatherName || '',
-        motherName: p.motherName || profile.motherName || '',
-        parentOccupation: p.parentOccupation || profile.parentOccupation || '',
-        annualIncome: p.annualIncome || profile.familyIncome || '',
+      }));
+      setAddress((a) => ({
+        permanentAddress: a.permanentAddress || profile.address?.permanentAddress || '',
+        currentAddress: a.currentAddress || profile.address?.currentAddress || '',
+        state: a.state || profile.address?.state || '',
+        district: a.district || profile.address?.district || '',
+        pincode: a.pincode || profile.address?.pincode || '',
       }));
       setAcademic((a) => ({
-        ...a,
         institutionName: a.institutionName || profile.collegeName || '',
-        boardUniversityName: a.boardUniversityName || profile.universityName || '',
+        institutionAddress: a.institutionAddress || '',
         courseName: a.courseName || profile.degree || '',
         department: a.department || profile.department || '',
         yearOfStudy: a.yearOfStudy || profile.yearOfStudy || '',
         rollNumber: a.rollNumber || profile.rollNumber || '',
-        academicYear: a.academicYear || profile.academicYear || '',
+        boardUniversityName: a.boardUniversityName || profile.universityName || '',
         previousYearMarks: a.previousYearMarks || profile.cgpa || '',
+        academicYear: a.academicYear || profile.academicYear || '',
+      }));
+      setFamily((f) => ({
+        fatherName: f.fatherName || profile.fatherName || '',
+        motherName: f.motherName || profile.motherName || '',
+        parentOccupation: f.parentOccupation || profile.parentOccupation || '',
+        annualIncome: f.annualIncome || profile.familyIncome || '',
       }));
       setBank((b) => ({
-        ...b,
         accountHolderName: b.accountHolderName || profile.accountHolderName || '',
         bankName: b.bankName || profile.bankName || '',
         branchName: b.branchName || profile.branchName || '',
@@ -203,10 +195,22 @@ const ScholarshipApplicationForm = () => {
         const app = res.data.data;
         if (app) {
           setAppId(app._id);
-          if (app.personalDetails) setPersonal({ ...initialPersonal, ...app.personalDetails });
-          if (app.academicDetails) setAcademic({ ...initialAcademic, ...app.academicDetails });
-          if (app.bankDetails)     setBank({ ...initialBank, ...app.bankDetails });
-          if (app.ocrData)         setOcrData(app.ocrData);
+          if (app.personalDetails) {
+            setPersonal((p) => ({ ...p, ...app.personalDetails }));
+            setAddress((a) => ({
+              permanentAddress: app.personalDetails.permanentAddress || a.permanentAddress,
+              currentAddress: app.personalDetails.currentAddress || a.currentAddress,
+              state: app.personalDetails.state || a.state,
+              district: app.personalDetails.district || a.district,
+              pincode: app.personalDetails.pincode || a.pincode,
+            }));
+            setFamily((f) => ({
+              ...f,
+              annualIncome: app.personalDetails.annualIncome || f.annualIncome,
+            }));
+          }
+          if (app.academicDetails) setAcademic((a) => ({ ...a, ...app.academicDetails }));
+          if (app.bankDetails)     setBank((b) => ({ ...b, ...app.bankDetails }));
           dispatch(applicationSuccess(app));
         }
       } catch { /* new application */ }
@@ -220,74 +224,22 @@ const ScholarshipApplicationForm = () => {
   const handleDocChange = (fieldName, file) =>
     setDocs((p) => ({ ...p, [fieldName]: file }));
 
-  // OCR Auto-fill function
-  const triggerOCR = async (docType) => {
-    setOcrLoading((prev) => ({ ...prev, [docType]: true }));
-    dispatch(showInfo(`Scanning ${docType} via AI OCR...`));
-    try {
-      const res = await axios.post(
-        `${API_BASE_URL}/ai/ocr`,
-        { documentType: docType },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (res.data.success) {
-        const data = res.data.data;
-        dispatch(showSuccess(`Extracted details from ${docType} successfully!`));
-
-        if (docType === 'aadhaar') {
-          setPersonal((p) => ({
-            ...p,
-            aadhaarNumber: data.aadhaarNumber || p.aadhaarNumber,
-            fullName: data.fullName || p.fullName,
-            dateOfBirth: data.dateOfBirth || p.dateOfBirth,
-          }));
-          setOcrData((o) => ({ ...o, aadhaarNumber: data.aadhaarNumber, fullName: data.fullName, dateOfBirth: data.dateOfBirth }));
-        } else if (docType === 'marksheet') {
-          setAcademic((a) => ({
-            ...a,
-            rollNumber: data.rollNumber || a.rollNumber,
-            previousYearMarks: data.previousYearMarks || a.previousYearMarks,
-            boardUniversityName: data.boardName || a.boardUniversityName,
-          }));
-          setOcrData((o) => ({ ...o, previousYearMarks: data.previousYearMarks }));
-        } else if (docType === 'bankPassbook') {
-          setBank((b) => ({
-            ...b,
-            accountHolderName: data.accountHolderName || b.accountHolderName,
-            bankName: data.bankName || b.bankName,
-            branchName: data.branchName || b.branchName,
-            accountNumber: data.accountNumber || b.accountNumber,
-            ifscCode: data.ifscCode || b.ifscCode,
-          }));
-          setOcrData((o) => ({ ...o, bankAccountNumber: data.accountNumber, bankIfscCode: data.ifscCode }));
-        } else if (docType === 'incomeCertificate') {
-          setPersonal((p) => ({
-            ...p,
-            annualIncome: data.annualIncome || p.annualIncome,
-          }));
-          setOcrData((o) => ({ ...o, income: data.annualIncome }));
-        }
-      }
-    } catch (err) {
-      dispatch(showError('OCR failed to read. Please enter details manually.'));
-    } finally {
-      setOcrLoading((prev) => ({ ...prev, [docType]: false }));
-    }
-  };
-
   const getCompletionScore = () => {
     let score = 0;
-    const personalItems = [personal.fullName, personal.dateOfBirth, personal.gender, personal.category, personal.aadhaarNumber, personal.state, personal.annualIncome];
-    const personalCount = personalItems.filter(Boolean).length;
-    score += (personalCount / personalItems.length) * 25;
+    const personalItems = [personal.fullName, personal.dateOfBirth, personal.gender, personal.category, personal.aadhaarNumber];
+    score += (personalItems.filter(Boolean).length / personalItems.length) * 20;
+
+    const addressItems = [address.permanentAddress, address.state, address.district];
+    score += (addressItems.filter(Boolean).length / addressItems.length) * 15;
 
     const academicItems = [academic.institutionName, academic.courseName, academic.yearOfStudy, academic.previousYearMarks];
-    const academicCount = academicItems.filter(Boolean).length;
-    score += (academicCount / academicItems.length) * 25;
+    score += (academicItems.filter(Boolean).length / academicItems.length) * 25;
+
+    const familyItems = [family.fatherName, family.annualIncome];
+    score += (familyItems.filter(Boolean).length / familyItems.length) * 15;
 
     const bankItems = [bank.accountHolderName, bank.bankName, bank.accountNumber, bank.ifscCode];
-    const bankCount = bankItems.filter(Boolean).length;
-    score += (bankCount / bankItems.length) * 25;
+    score += (bankItems.filter(Boolean).length / bankItems.length) * 15;
 
     const docItems = ['aadhaar', 'incomeCertificate', 'marksheet', 'photo'];
     const uploadedCount = docItems.filter((d) => 
@@ -296,7 +248,7 @@ const ScholarshipApplicationForm = () => {
       profile?.documents?.[d] || 
       (d === 'photo' && profile?.profilePhoto)
     ).length;
-    score += (uploadedCount / docItems.length) * 25;
+    score += (uploadedCount / docItems.length) * 10;
 
     return Math.round(score);
   };
@@ -306,7 +258,7 @@ const ScholarshipApplicationForm = () => {
     const recommendations = [];
     let status = 'Eligible';
 
-    const income = personal.annualIncome;
+    const income = family.annualIncome;
     if (income && Number(income) > 800000) {
       status = 'Not Eligible';
       reasons.push('Income exceeds ₹8,00,000 limit.');
@@ -330,7 +282,7 @@ const ScholarshipApplicationForm = () => {
       recommendations.push('Provide a valid 12-digit Aadhaar Card number.');
     }
 
-    if (!personal.state) {
+    if (!address.state) {
       if (status !== 'Not Eligible') status = 'Missing Requirements';
       reasons.push('Domicile State missing.');
       recommendations.push('State Domicile is mandatory to verify local bounds.');
@@ -346,9 +298,40 @@ const ScholarshipApplicationForm = () => {
   };
 
   const buildPayload = (status = 'draft') => ({
-    personalDetails: { ...personal, dateOfBirth: personal.dateOfBirth || undefined, annualIncome: personal.annualIncome ? Number(personal.annualIncome) : undefined },
-    academicDetails: { ...academic, previousYearMarks: academic.previousYearMarks ? Number(academic.previousYearMarks) : undefined },
-    bankDetails: bank,
+    personalDetails: {
+      fullName: personal.fullName,
+      dateOfBirth: personal.dateOfBirth ? new Date(personal.dateOfBirth) : undefined,
+      gender: personal.gender,
+      religion: personal.religion,
+      category: personal.category,
+      aadhaarNumber: personal.aadhaarNumber,
+      phone: personal.phone,
+      email: personal.email,
+      permanentAddress: address.permanentAddress,
+      currentAddress: address.currentAddress,
+      state: address.state,
+      district: address.district,
+      pincode: address.pincode,
+      annualIncome: family.annualIncome ? Number(family.annualIncome) : undefined,
+    },
+    academicDetails: {
+      institutionName: academic.institutionName,
+      institutionAddress: academic.institutionAddress,
+      courseName: academic.courseName,
+      department: academic.department,
+      yearOfStudy: academic.yearOfStudy,
+      rollNumber: academic.rollNumber,
+      boardUniversityName: academic.boardUniversityName,
+      previousYearMarks: academic.previousYearMarks ? Number(academic.previousYearMarks) : undefined,
+      academicYear: academic.academicYear,
+    },
+    bankDetails: {
+      accountHolderName: bank.accountHolderName,
+      bankName: bank.bankName,
+      branchName: bank.branchName,
+      accountNumber: bank.accountNumber,
+      ifscCode: bank.ifscCode,
+    },
     ocrData,
     status,
   });
@@ -365,10 +348,9 @@ const ScholarshipApplicationForm = () => {
     }
   };
 
-  const handleSaveDraft = async () => {
+  const handleSaveSection = async () => {
     setSaving(true);
     try {
-      // Refresh database states first
       const appRes = await getApplication();
       const currentApp = appRes.data.data;
       const profileRes = await getProfile();
@@ -387,9 +369,12 @@ const ScholarshipApplicationForm = () => {
 
       const app = await saveOrCreate(payload);
       dispatch(applicationSuccess(app));
-      dispatch(showSuccess('Draft saved successfully!'));
+      dispatch(showSuccess(`Section ${step + 1} saved successfully!`));
+      if (step < STEPS.length - 1) {
+        setStep((s) => s + 1);
+      }
     } catch (err) {
-      dispatch(showError(err.response?.data?.message || 'Failed to save draft.'));
+      dispatch(showError(err.response?.data?.message || 'Failed to save section.'));
     } finally {
       setSaving(false);
     }
@@ -398,7 +383,6 @@ const ScholarshipApplicationForm = () => {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      // 8. Auto-fetch latest profile and application data before submitting to prevent out-of-sync checks
       const profileRes = await getProfile();
       let latestProfile = profile;
       if (profileRes.data.success && profileRes.data.exists) {
@@ -415,54 +399,44 @@ const ScholarshipApplicationForm = () => {
         dispatch(applicationSuccess(latestApp));
       }
 
-      // 4. Validate using profile.documents, application.documents, and local docs state
-      const required = ['aadhaar', 'incomeCertificate', 'marksheet', 'photo'];
-      
-      // 5. Add console logs for debugging
-      console.log('[DEBUG] Validating scholarship application documents...');
-      console.log('[DEBUG] Local unsaved docs state:', docs);
-      console.log('[DEBUG] DB Application documents:', latestApp?.documents);
-      console.log('[DEBUG] DB Profile documents:', latestProfile?.documents);
-      console.log('[DEBUG] DB Profile profilePhoto:', latestProfile?.profilePhoto);
+      // Check required sections and documents
+      const missingFields = [];
+      if (!personal.fullName?.trim()) missingFields.push('Personal Details: Full Name');
+      if (!personal.gender) missingFields.push('Personal Details: Gender');
+      if (!personal.category) missingFields.push('Personal Details: Category');
+      if (!personal.aadhaarNumber?.trim()) missingFields.push('Personal Details: Aadhaar Number');
+      if (!address.permanentAddress?.trim()) missingFields.push('Address: Permanent Address');
+      if (!address.state) missingFields.push('Address: State');
+      if (!address.district?.trim()) missingFields.push('Address: District');
+      if (!academic.institutionName?.trim()) missingFields.push('Academic: Institution Name');
+      if (!academic.courseName?.trim()) missingFields.push('Academic: Course Name');
+      if (!academic.yearOfStudy) missingFields.push('Academic: Year of Study');
+      if (!family.fatherName?.trim()) missingFields.push('Family & Income: Father\'s Name');
+      if (!family.annualIncome) missingFields.push('Family & Income: Annual Income');
+      if (!bank.accountHolderName?.trim()) missingFields.push('Bank Details: Account Holder Name');
+      if (!bank.accountNumber?.trim()) missingFields.push('Bank Details: Account Number');
+      if (!bank.ifscCode?.trim()) missingFields.push('Bank Details: IFSC Code');
 
-      const missing = [];
-      const validationDetails = {};
-
-      required.forEach((field) => {
+      const requiredDocs = ['aadhaar', 'incomeCertificate', 'marksheet', 'photo'];
+      requiredDocs.forEach((field) => {
         const localVal = docs[field];
         const appVal = latestApp?.documents?.[field];
         const profileVal = field === 'photo'
           ? (latestProfile?.profilePhoto || latestProfile?.documents?.photo)
           : latestProfile?.documents?.[field];
 
-        const exists = localVal || appVal || profileVal;
-        validationDetails[field] = {
-          exists: !!exists,
-          local: localVal ? (localVal.name || 'File Object') : 'empty',
-          dbApp: appVal || 'empty',
-          dbProfile: profileVal || 'empty',
-        };
-
-        if (!exists) {
-          missing.push(field);
+        if (!localVal && !appVal && !profileVal) {
+          missingFields.push(`Document: ${field}`);
         }
       });
 
-      console.log('[DEBUG] Document validation results:', validationDetails);
-
-      if (missing.length > 0) {
-        // 10. Detailed error message showing exactly what is missing and current values
-        const missingDetails = missing.map((field) => {
-          const detail = validationDetails[field];
-          return `- ${field}: (local: ${detail.local}, application db: ${detail.dbApp}, profile db: ${detail.dbProfile})`;
-        }).join('\n');
-        
-        dispatch(showError(`Please upload all required documents.\nMissing:\n${missingDetails}`));
+      if (missingFields.length > 0) {
+        dispatch(showError(`Application incomplete! Please complete all required sections:\n- ${missingFields.join('\n- ')}`));
         setSubmitting(false);
         return;
       }
 
-      // 9. If files exist, upload only newly selected files and submit immediately
+      // Upload newly selected files
       const newFiles = Object.entries(docs).filter(([, v]) => v instanceof File);
       if (newFiles.length > 0) {
         dispatch(showInfo('Uploading documents...'));
@@ -472,21 +446,9 @@ const ScholarshipApplicationForm = () => {
         
         if (uploadRes.data.success) {
           dispatch(showSuccess('Documents uploaded successfully!'));
-          // 3. Refresh profile state after upload
-          const refreshedProfileRes = await getProfile();
-          if (refreshedProfileRes.data.success && refreshedProfileRes.data.exists) {
-            const refreshedProfile = refreshedProfileRes.data.data;
-            setProfile(refreshedProfile);
-            dispatch(profileSuccess({ data: refreshedProfile, exists: true }));
-          }
-          const refreshedAppRes = await getApplication();
-          if (refreshedAppRes.data.data) {
-            dispatch(applicationSuccess(refreshedAppRes.data.data));
-          }
         }
       }
 
-      // Re-fetch database states to build final payload
       const finalProfileRes = await getProfile();
       const finalProfile = finalProfileRes.data.data || latestProfile;
       const finalAppRes = await getApplication();
@@ -502,8 +464,6 @@ const ScholarshipApplicationForm = () => {
         bonafide: docs.bonafide instanceof File ? '' : (finalApp?.documents?.bonafide || finalProfile?.documents?.bonafide || ''),
         photo: finalApp?.documents?.photo || finalProfile?.profilePhoto || finalProfile?.documents?.photo || '',
       };
-
-      console.log('[DEBUG] Submitting application with payload:', payload);
 
       const app = await saveOrCreate(payload);
       dispatch(applicationSuccess(app));
@@ -522,43 +482,6 @@ const ScholarshipApplicationForm = () => {
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="h-10 w-10 text-primary animate-spin" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!profile || (profile.completionPercentage || 0) < 80) {
-    const currentPercent = profile ? (profile.completionPercentage || 0) : 0;
-    return (
-      <DashboardLayout>
-        <div className="card p-8 text-center max-w-lg mx-auto mt-12 space-y-6 shadow-card border border-gray-100">
-          <div className="h-16 w-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto border border-amber-100">
-            <Lock className="h-8 w-8" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-gray-900">Profile Completion Required</h2>
-            <p className="text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
-              A minimum of 80% profile completion is required to apply for scholarships. Currently, your profile completion is at {currentPercent}%. Please complete your profile details (personal, academic, bank, and documents) to proceed.
-            </p>
-          </div>
-          
-          <div className="space-y-2 max-w-xs mx-auto">
-            <div className="flex justify-between items-center text-xs font-bold text-gray-500 uppercase">
-              <span>Profile Status</span>
-              <span className="text-amber-600 font-extrabold">{currentPercent}% Complete</span>
-            </div>
-            <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full transition-all duration-300" style={{ width: `${currentPercent}%` }} />
-            </div>
-          </div>
-
-          <button
-            onClick={() => navigate('/dashboard/profile')}
-            className="btn-primary inline-flex items-center gap-2 px-6 py-3 font-semibold shadow-primary"
-          >
-            <User className="h-4 w-4 text-white" />
-            Complete Profile Now
-          </button>
         </div>
       </DashboardLayout>
     );
@@ -601,100 +524,112 @@ const ScholarshipApplicationForm = () => {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm overflow-x-auto">
             <ProgressSteps steps={STEPS} currentStep={step} />
           </div>
 
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
             
-            {/* Step 0: Personal */}
-             {step === 0 && (
+            {/* SECTION 1: Personal Information */}
+            {step === 0 && (
               <div className="space-y-4">
-                <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center gap-1.5 mb-4">
-                  <Info className="h-4 w-4 shrink-0" />
-                  Basic details are pre-filled and locked from My Profile. To edit, go to the My Profile page.
-                </p>
-
                 <div className="flex justify-between items-center border-b pb-2 mb-4">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{t('personalDetails')}</h2>
-                  
-                  {/* OCR trigger is disabled since profile is pre-filled */}
+                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">01 Personal Information</h2>
                 </div>
                 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="p-fullname" name="fullName" label={t('fullName')} value={personal.fullName} onChange={handleFieldChange(setPersonal)} required disabled={true} />
-                  <FloatInput id="p-dob" name="dateOfBirth" label={t('dob')} type="date" value={personal.dateOfBirth} onChange={handleFieldChange(setPersonal)} disabled={true} />
+                  <FloatInput id="p-fullname" name="fullName" label={t('fullName')} value={personal.fullName} onChange={handleFieldChange(setPersonal)} required />
+                  <FloatInput id="p-dob" name="dateOfBirth" label={t('dob')} type="date" value={personal.dateOfBirth} onChange={handleFieldChange(setPersonal)} required />
                 </div>
- 
+
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <SelectField id="p-gender" name="gender" label="Gender" value={personal.gender} onChange={handleFieldChange(setPersonal)} options={['Male','Female','Other']} disabled={true} />
+                  <SelectField id="p-gender" name="gender" label="Gender" value={personal.gender} onChange={handleFieldChange(setPersonal)} options={['Male','Female','Other']} required />
                   <FloatInput id="p-religion" name="religion" label="Religion" value={personal.religion} onChange={handleFieldChange(setPersonal)} />
                   <SelectField id="p-category" name="category" label={t('caste')} value={personal.category} onChange={handleFieldChange(setPersonal)} options={['SC','ST','OBC','General']} required />
                 </div>
- 
+
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="p-aadhaar" name="aadhaarNumber" label={t('aadhaar')} value={personal.aadhaarNumber} onChange={handleFieldChange(setPersonal)} maxLength={12} disabled={true} />
-                  <FloatInput id="p-phone" name="phone" label={t('phone')} value={personal.phone} onChange={handleFieldChange(setPersonal)} maxLength={10} disabled={true} />
+                  <FloatInput id="p-aadhaar" name="aadhaarNumber" label={t('aadhaar')} value={personal.aadhaarNumber} onChange={handleFieldChange(setPersonal)} maxLength={12} required />
+                  <FloatInput id="p-phone" name="phone" label={t('phone')} value={personal.phone} onChange={handleFieldChange(setPersonal)} maxLength={10} required />
                 </div>
- 
+
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="p-email" name="email" label={t('email')} type="email" value={personal.email} onChange={handleFieldChange(setPersonal)} disabled={true} />
-                  <FloatInput id="p-income" name="annualIncome" label={t('income')} type="number" value={personal.annualIncome} onChange={handleFieldChange(setPersonal)} required disabled={true} />
-                </div>
- 
-                <FloatInput id="p-address" name="permanentAddress" label="Permanent Address" value={personal.permanentAddress} onChange={handleFieldChange(setPersonal)} disabled={true} />
- 
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <SelectField id="p-state" name="state" label={t('state')} value={personal.state} onChange={handleFieldChange(setPersonal)} options={STATES} required disabled={true} />
-                  <FloatInput id="p-district" name="district" label={t('district')} value={personal.district} onChange={handleFieldChange(setPersonal)} disabled={true} />
+                  <FloatInput id="p-email" name="email" label={t('email')} type="email" value={personal.email} onChange={handleFieldChange(setPersonal)} required />
                 </div>
               </div>
             )}
 
-            {/* Step 1: Academic */}
+            {/* SECTION 2: Address Information */}
             {step === 1 && (
               <div className="space-y-4">
-                <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center gap-1.5 mb-4">
-                  <Info className="h-4 w-4 shrink-0" />
-                  Academic details are pre-filled and locked from My Profile. To edit, go to the My Profile page.
-                </p>
-
                 <div className="flex justify-between items-center border-b pb-2 mb-4">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{t('academicDetails')}</h2>
-                  
-                  {/* OCR trigger is disabled since profile is pre-filled */}
+                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">02 Address Information</h2>
+                </div>
+
+                <FloatInput id="addr-perm" name="permanentAddress" label="Permanent Address" value={address.permanentAddress} onChange={handleFieldChange(setAddress)} required />
+                <FloatInput id="addr-curr" name="currentAddress" label="Current / Correspondence Address" value={address.currentAddress} onChange={handleFieldChange(setAddress)} />
+
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <SelectField id="addr-state" name="state" label={t('state')} value={address.state} onChange={handleFieldChange(setAddress)} options={STATES} required />
+                  <FloatInput id="addr-district" name="district" label={t('district')} value={address.district} onChange={handleFieldChange(setAddress)} required />
+                  <FloatInput id="addr-pin" name="pincode" label="Pincode" value={address.pincode} onChange={handleFieldChange(setAddress)} maxLength={6} required />
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 3: Academic Information */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2 mb-4">
+                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">03 Academic Information</h2>
                 </div>
                 
-                <FloatInput id="a-inst" name="institutionName" label={t('institution')} value={academic.institutionName} onChange={handleFieldChange(setAcademic)} required disabled={true} />
+                <FloatInput id="a-inst" name="institutionName" label={t('institution')} value={academic.institutionName} onChange={handleFieldChange(setAcademic)} required />
                 <FloatInput id="a-addr" name="institutionAddress" label="Institution Address" value={academic.institutionAddress} onChange={handleFieldChange(setAcademic)} />
                 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="a-course" name="courseName" label={t('course')} value={academic.courseName} onChange={handleFieldChange(setAcademic)} required disabled={true} />
+                  <FloatInput id="a-course" name="courseName" label={t('course')} value={academic.courseName} onChange={handleFieldChange(setAcademic)} required />
+                  <FloatInput id="a-dept" name="department" label="Branch / Department" value={academic.department} onChange={handleFieldChange(setAcademic)} />
+                </div>
+
+                <div className="grid sm:grid-cols-3 gap-4">
                   <SelectField id="a-year" name="yearOfStudy" label={t('yearOfStudy')} value={academic.yearOfStudy} onChange={handleFieldChange(setAcademic)}
-                    options={['1st Year','2nd Year','3rd Year','4th Year','5th Year']} required disabled={true} />
+                    options={['1st Year','2nd Year','3rd Year','4th Year','5th Year']} required />
+                  <FloatInput id="a-roll" name="rollNumber" label={t('rollNumber')} value={academic.rollNumber} onChange={handleFieldChange(setAcademic)} />
+                  <FloatInput id="a-academicYear" name="academicYear" label="Academic Year (e.g. 2024-25)" value={academic.academicYear} onChange={handleFieldChange(setAcademic)} />
                 </div>
- 
+
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="a-roll" name="rollNumber" label={t('rollNumber')} value={academic.rollNumber} onChange={handleFieldChange(setAcademic)} disabled={true} />
-                  <FloatInput id="a-marks" name="previousYearMarks" label={t('marks')} type="number" value={academic.previousYearMarks} onChange={handleFieldChange(setAcademic)} disabled={true} />
+                  <FloatInput id="a-marks" name="previousYearMarks" label={t('marks')} type="number" value={academic.previousYearMarks} onChange={handleFieldChange(setAcademic)} required />
+                  <FloatInput id="a-uni" name="boardUniversityName" label="Board / University Name" value={academic.boardUniversityName} onChange={handleFieldChange(setAcademic)} required />
                 </div>
- 
-                <FloatInput id="a-uni" name="boardUniversityName" label="Board / University Name" value={academic.boardUniversityName} onChange={handleFieldChange(setAcademic)} required disabled={true} />
               </div>
             )}
 
-            {/* Step 2: Bank */}
-            {step === 2 && (
+            {/* SECTION 4: Family & Income Information */}
+            {step === 3 && (
               <div className="space-y-4">
-                <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center gap-1.5 mb-4">
-                  <Info className="h-4 w-4 shrink-0" />
-                  Bank details are pre-filled and locked from My Profile. To edit, go to the My Profile page.
-                </p>
-
                 <div className="flex justify-between items-center border-b pb-2 mb-4">
-                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">{t('bankDetails')}</h2>
-                  
-                  {/* OCR trigger is disabled since profile is pre-filled */}
+                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">04 Family & Income Information</h2>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FloatInput id="f-father" name="fatherName" label="Father's Name" value={family.fatherName} onChange={handleFieldChange(setFamily)} required />
+                  <FloatInput id="f-mother" name="motherName" label="Mother's Name" value={family.motherName} onChange={handleFieldChange(setFamily)} required />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FloatInput id="f-occ" name="parentOccupation" label="Parent's Occupation" value={family.parentOccupation} onChange={handleFieldChange(setFamily)} />
+                  <FloatInput id="f-income" name="annualIncome" label="Annual Family Income (₹)" type="number" value={family.annualIncome} onChange={handleFieldChange(setFamily)} required />
+                </div>
+              </div>
+            )}
+
+            {/* SECTION 5: Bank Details */}
+            {step === 4 && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2 mb-4">
+                  <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wide">05 Bank Details</h2>
                 </div>
                 
                 <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 flex items-center gap-2">
@@ -702,59 +637,54 @@ const ScholarshipApplicationForm = () => {
                   Ensure bank accounts are active and seeded with your Aadhaar for Direct Benefit Transfer (DBT).
                 </p>
 
-                <FloatInput id="b-holder" name="accountHolderName" label="Account Holder Name" value={bank.accountHolderName} onChange={handleFieldChange(setBank)} required disabled={true} />
+                <FloatInput id="b-holder" name="accountHolderName" label="Account Holder Name" value={bank.accountHolderName} onChange={handleFieldChange(setBank)} required />
                 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="b-bank" name="bankName" label={t('bankName')} value={bank.bankName} onChange={handleFieldChange(setBank)} required disabled={true} />
-                  <FloatInput id="b-branch" name="branchName" label="Branch Name" value={bank.branchName} onChange={handleFieldChange(setBank)} disabled={true} />
+                  <FloatInput id="b-bank" name="bankName" label={t('bankName')} value={bank.bankName} onChange={handleFieldChange(setBank)} required />
+                  <FloatInput id="b-branch" name="branchName" label="Branch Name" value={bank.branchName} onChange={handleFieldChange(setBank)} />
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FloatInput id="b-acc" name="accountNumber" label={t('accNo')} value={bank.accountNumber} onChange={handleFieldChange(setBank)} required disabled={true} />
-                  <FloatInput id="b-ifsc" name="ifscCode" label={t('ifsc')} value={bank.ifscCode} onChange={handleFieldChange(setBank)} required disabled={true} />
+                  <FloatInput id="b-acc" name="accountNumber" label={t('accNo')} value={bank.accountNumber} onChange={handleFieldChange(setBank)} required />
+                  <FloatInput id="b-ifsc" name="ifscCode" label={t('ifsc')} value={bank.ifscCode} onChange={handleFieldChange(setBank)} required />
                 </div>
               </div>
             )}
 
-            {/* Step 3: Documents */}
-            {step === 3 && (
+            {/* SECTION 6: Documents */}
+            {step === 5 && (
               <div className="space-y-4">
-                <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 flex items-center gap-1.5 mb-4">
-                  <Info className="h-4 w-4 shrink-0" />
-                  Profile documents are pre-filled and locked from My Profile. To edit, go to the My Profile page.
-                </p>
-
-                <h2 className="text-sm font-bold text-slate-800 border-b pb-2 mb-4 uppercase tracking-wide">{t('documents')}</h2>
+                <h2 className="text-sm font-bold text-slate-800 border-b pb-2 mb-4 uppercase tracking-wide">06 Documents</h2>
                 <p className="text-[11px] text-slate-400">All certificates must be uploaded as legible PDFs (max 2MB). Photo should be JPG/PNG format.</p>
                 
                 <div className="grid sm:grid-cols-2 gap-5">
                   <DocumentUploadCard
                     label="Aadhaar Card *" fieldName="aadhaar" hint="PDF only, max 2MB"
-                    value={application?.documents?.aadhaar || profile?.documents?.aadhaar} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.aadhaar || profile?.documents?.aadhaar} onChange={handleDocChange}
                     status={application?.documentStatuses?.aadhaar?.status || profile?.documentStatuses?.aadhaar?.status}
                     remarks={application?.documentStatuses?.aadhaar?.remarks || profile?.documentStatuses?.aadhaar?.remarks}
                   />
                   <DocumentUploadCard
                     label="Income Certificate *" fieldName="incomeCertificate" hint="PDF only, max 2MB"
-                    value={application?.documents?.incomeCertificate || profile?.documents?.incomeCertificate} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.incomeCertificate || profile?.documents?.incomeCertificate} onChange={handleDocChange}
                     status={application?.documentStatuses?.incomeCertificate?.status || profile?.documentStatuses?.incomeCertificate?.status}
                     remarks={application?.documentStatuses?.incomeCertificate?.remarks || profile?.documentStatuses?.incomeCertificate?.remarks}
                   />
                   <DocumentUploadCard
                     label="Caste Certificate (if applicable)" fieldName="casteCertificate" hint="PDF only, max 2MB"
-                    value={application?.documents?.casteCertificate || profile?.documents?.casteCertificate} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.casteCertificate || profile?.documents?.casteCertificate} onChange={handleDocChange}
                     status={application?.documentStatuses?.casteCertificate?.status || profile?.documentStatuses?.casteCertificate?.status}
                     remarks={application?.documentStatuses?.casteCertificate?.remarks || profile?.documentStatuses?.casteCertificate?.remarks}
                   />
                   <DocumentUploadCard
                     label="Class 12 / Qualifying Marksheet *" fieldName="marksheet" hint="PDF only, max 2MB"
-                    value={application?.documents?.marksheet || profile?.documents?.marksheet} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.marksheet || profile?.documents?.marksheet} onChange={handleDocChange}
                     status={application?.documentStatuses?.marksheet?.status || profile?.documentStatuses?.marksheet?.status}
                     remarks={application?.documentStatuses?.marksheet?.remarks || profile?.documentStatuses?.marksheet?.remarks}
                   />
                   <DocumentUploadCard
                     label="Bank Passbook / Cancelled Cheque" fieldName="bankPassbook" hint="PDF only, max 2MB"
-                    value={application?.documents?.bankPassbook || profile?.documents?.bankPassbook} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.bankPassbook || profile?.documents?.bankPassbook} onChange={handleDocChange}
                     status={application?.documentStatuses?.bankPassbook?.status || profile?.documentStatuses?.bankPassbook?.status}
                     remarks={application?.documentStatuses?.bankPassbook?.remarks || profile?.documentStatuses?.bankPassbook?.remarks}
                   />
@@ -766,7 +696,7 @@ const ScholarshipApplicationForm = () => {
                   />
                   <DocumentUploadCard
                     label="Passport Size Photo *" fieldName="photo" hint="JPG/PNG, max 2MB" accept=".jpg,.jpeg,.png"
-                    value={application?.documents?.photo || profile?.profilePhoto} onChange={handleDocChange} readOnly={true}
+                    value={application?.documents?.photo || profile?.profilePhoto} onChange={handleDocChange}
                     status={application?.documentStatuses?.photo?.status || profile?.documentStatuses?.photo?.status}
                     remarks={application?.documentStatuses?.photo?.remarks || profile?.documentStatuses?.photo?.remarks}
                   />
@@ -774,72 +704,39 @@ const ScholarshipApplicationForm = () => {
               </div>
             )}
 
-            {/* Step 4: Preview */}
-            {step === 4 && (
-              <div className="space-y-6">
-                <h2 className="text-sm font-bold text-slate-800 border-b pb-2 uppercase tracking-wide">{t('previewSubmit')}</h2>
-                <p className="text-xs text-blue-600 bg-blue-50 border border-blue-200 rounded-xl px-4 py-2">
-                  Review all details carefully. Mismatches detected by the Nodal Officers will cause delay or rejection.
-                </p>
-
-                {[
-                  { title: t('personalDetails'), data: personal },
-                  { title: t('academicDetails'), data: academic },
-                  { title: t('bankDetails'),     data: bank },
-                ].map(({ title, data }) => (
-                  <div key={title} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
-                    <div className="bg-slate-50/70 px-4 py-2.5 border-b">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{title}</p>
-                    </div>
-                    <div className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-slate-50 bg-white">
-                      {Object.entries(data).filter(([,v]) => v !== undefined && v !== '').map(([k, v]) => (
-                        <div key={k} className="px-4 py-3 border-b border-slate-50/50">
-                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide">{k.replace(/([A-Z])/g, ' $1')}</p>
-                          <p className="text-xs font-semibold text-slate-700 mt-0.5">{k === 'annualIncome' ? `₹${Number(v).toLocaleString()}` : v}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Navigation Controls */}
           <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
             <button
+              type="button"
               onClick={() => step > 0 ? setStep((s) => s - 1) : navigate('/dashboard')}
               className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1"
             >
-              <ChevronLeft className="w-4 h-4" /> {step === 0 ? 'Dashboard' : 'Previous'}
+              <ChevronLeft className="w-4 h-4" /> {step === 0 ? 'Dashboard' : 'Back'}
             </button>
 
             <div className="flex gap-2">
-              <button
-                onClick={handleSaveDraft}
-                disabled={saving}
-                className="px-4 py-2 border hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-slate-400" />}
-                {t('saveDraft')}
-              </button>
-
               {step < STEPS.length - 1 ? (
                 <button
-                  onClick={() => setStep((s) => s + 1)}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow"
+                  type="button"
+                  onClick={handleSaveSection}
+                  disabled={saving}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow disabled:opacity-50"
                 >
-                  Next
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Save & Continue
                   <ChevronRight className="w-4 h-4" />
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
                   className="px-6 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition shadow disabled:opacity-50"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {t('submit')}
+                  Submit Application
                 </button>
               )}
             </div>
@@ -866,14 +763,26 @@ const ScholarshipApplicationForm = () => {
             <div className="pt-2 text-[10px] space-y-1.5 text-slate-500 font-medium">
               <div className="flex justify-between">
                 <span>Personal Fields:</span>
-                <span className={personal.fullName && personal.category && personal.state ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
-                  {personal.fullName && personal.category && personal.state ? '✓ Done' : 'Pending'}
+                <span className={personal.fullName && personal.category ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
+                  {personal.fullName && personal.category ? '✓ Done' : 'Pending'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Address Info:</span>
+                <span className={address.permanentAddress && address.state ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
+                  {address.permanentAddress && address.state ? '✓ Done' : 'Pending'}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Academic Fields:</span>
                 <span className={academic.institutionName && academic.courseName && academic.previousYearMarks ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
                   {academic.institutionName && academic.courseName && academic.previousYearMarks ? '✓ Done' : 'Pending'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Family & Income:</span>
+                <span className={family.fatherName && family.annualIncome ? 'text-[#15803D] dark:text-[#4ADE80] font-bold' : ''}>
+                  {family.fatherName && family.annualIncome ? '✓ Done' : 'Pending'}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -922,9 +831,9 @@ const ScholarshipApplicationForm = () => {
             <div className="space-y-3 text-xs font-medium">
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Annual Income limit:</span>
-                {personal.annualIncome ? (
-                  Number(personal.annualIncome) <= 800000 ? (
-                    <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> ₹{Number(personal.annualIncome).toLocaleString()}</span>
+                {family.annualIncome ? (
+                  Number(family.annualIncome) <= 800000 ? (
+                    <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> ₹{Number(family.annualIncome).toLocaleString()}</span>
                   ) : (
                     <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Exceeded</span>
                   )

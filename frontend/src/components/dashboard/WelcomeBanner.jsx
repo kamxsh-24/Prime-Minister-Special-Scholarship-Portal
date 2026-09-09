@@ -3,9 +3,13 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { ArrowRight } from 'lucide-react';
 
-const WelcomeBanner = ({ studentName = 'Kamesh Kumar' }) => {
+const WelcomeBanner = ({ studentName = 'Kamesh Kumar', application }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  const isSubmitted = application?.status && application.status !== 'draft';
+  const ctaLink = isSubmitted ? '/dashboard/status' : '/dashboard/application';
+  const ctaText = isSubmitted ? 'Track Status' : 'Continue Application';
 
   return (
     <div
@@ -22,20 +26,23 @@ const WelcomeBanner = ({ studentName = 'Kamesh Kumar' }) => {
             Welcome back,
           </span>
 
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0B2545] dark:text-white font-display tracking-tight leading-tight">
+          <h2 id="dashboard-welcome-banner" className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#0B2545] dark:text-white font-display tracking-tight leading-tight">
             {studentName}!
           </h2>
 
           <p className="text-xs sm:text-sm text-gray-600 dark:text-[#A3A3A3] leading-relaxed max-w-md">
-            Keep moving forward. Complete your application and unlock new opportunities with PMSSS.
+            {isSubmitted
+              ? 'Your application has been submitted and is under verification. Check status for updates.'
+              : 'Keep moving forward. Complete your application and unlock new opportunities with PMSSS.'}
           </p>
 
           <div className="pt-2">
             <Link
-              to="/dashboard/application"
+              id="welcome-banner-continue-btn"
+              to={ctaLink}
               className="inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3 bg-[#0D6EFD] hover:bg-blue-600 active:bg-blue-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm shadow-blue-500/20 transition-all duration-200 group"
             >
-              <span>Continue Application</span>
+              <span>{ctaText}</span>
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
             </Link>
           </div>

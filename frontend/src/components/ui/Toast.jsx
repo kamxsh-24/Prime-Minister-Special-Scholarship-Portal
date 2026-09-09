@@ -27,11 +27,13 @@ const Toast = ({ toast }) => {
 
   return (
     <div
-      className={`toast-enter flex items-start gap-3 px-4 py-3 rounded-xl border shadow-card-md min-w-[280px] max-w-[360px] ${BG[toast.type]}`}
+      id={`toast-item-${toast.id}`}
+      className={`toast-enter toast-notification flex items-start gap-3 px-4 py-3 rounded-xl border shadow-card-md min-w-[280px] max-w-[360px] ${BG[toast.type]}`}
     >
       {ICONS[toast.type]}
       <p className="text-sm text-gray-800 flex-1 leading-snug">{toast.message}</p>
       <button
+        id={`toast-close-btn-${toast.id}`}
         onClick={() => dispatch(removeToast(toast.id))}
         className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
         aria-label="Close"
@@ -46,7 +48,7 @@ const ToastContainer = () => {
   const { toasts } = useSelector((s) => s.toast);
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+    <div id="toast-container" className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
       {toasts.map((t) => (
         <div key={t.id} className="pointer-events-auto">
           <Toast toast={t} />

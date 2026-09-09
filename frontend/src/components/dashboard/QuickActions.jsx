@@ -50,6 +50,7 @@ const QuickActions = () => {
           return (
             <Link
               key={act.id}
+              id={`quick-action-${act.id}`}
               to={act.to}
               className="bg-white dark:bg-[#080808] border border-gray-200/80 dark:border-[#1A1A1A] hover:border-blue-300 dark:hover:border-[#0D6EFD]/50 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-3.5 group"
             >
