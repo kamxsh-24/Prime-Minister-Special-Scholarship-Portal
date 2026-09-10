@@ -124,6 +124,38 @@ router.post('/upload', protect, (req, res) => {
         await application.save();
       }
 
+      // Create Audit Log for uploaded documents
+      const AuditLog = require('../models/AuditLog');
+      const docNameMap = {
+        aadhaar: 'Aadhaar Card',
+        incomeCertificate: 'Income Certificate',
+        casteCertificate: 'Caste Certificate',
+        marksheet: 'Academic Marksheet',
+        bankPassbook: 'Bank Passbook',
+        bonafide: 'Bonafide Certificate',
+        photo: 'Passport Photo',
+      };
+
+      for (const [fieldname] of Object.entries(req.files)) {
+        const docLabel = docNameMap[fieldname] || fieldname;
+        const isReplacement = Boolean(
+          (profile?.documents && profile.documents[fieldname]) ||
+          (application?.documents && application.documents[fieldname])
+        );
+        await AuditLog.create({
+          userId: req.user._id,
+          action: isReplacement ? 'document_replaced' : 'document_uploaded',
+          ipAddress: req.ip,
+          details: {
+            documentName: docLabel,
+            fieldname,
+            title: isReplacement ? `${docLabel} updated` : `${docLabel} uploaded`,
+            description: isReplacement ? 'Document replaced successfully' : 'Document uploaded successfully',
+            type: isReplacement ? 'info' : 'success',
+          },
+        });
+      }
+
       return res.json({
         success: true,
         message: 'Documents uploaded successfully.',

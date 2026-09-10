@@ -810,14 +810,14 @@ const ScholarshipApplicationForm = () => {
             {/* Overall Status Banner */}
             <div className={`p-3.5 rounded-2xl flex items-center gap-2.5 ${
               eligibility.status === 'Eligible' ? 'bg-[#F0FDF4] dark:bg-[#0B2E1B] text-[#15803D] dark:text-[#4ADE80] border border-[#86EFAC] dark:border-[#166534]' :
-              eligibility.status === 'Probably Eligible' ? 'bg-orange-50 text-orange-800 border border-orange-100' :
-              eligibility.status === 'Not Eligible' ? 'bg-red-50 text-red-800 border border-red-100' :
-              'bg-slate-50 text-slate-600 border'
+              eligibility.status === 'Probably Eligible' ? 'bg-orange-50 text-orange-800 border border-orange-100 dark:bg-[#2A1A05] dark:text-[#FEF3C7] dark:border-[#92400E]' :
+              eligibility.status === 'Not Eligible' ? 'bg-red-50 text-red-800 border border-red-100 dark:bg-[#2A0F12] dark:text-[#FEE2E2] dark:border-[#7F1D1D]' :
+              'bg-slate-50 dark:bg-[#121212] text-slate-600 dark:text-[#A3A3A3] border border-slate-200 dark:border-[#262626]'
             }`}>
               {eligibility.status === 'Eligible' || eligibility.status === 'Probably Eligible' ? (
-                <CheckCircle2 className={`w-5 h-5 shrink-0 ${eligibility.status === 'Eligible' ? 'text-[#22C55E] dark:text-[#4ADE80]' : 'text-orange-500'}`} />
+                <CheckCircle2 className={`w-5 h-5 shrink-0 ${eligibility.status === 'Eligible' ? 'text-[#22C55E] dark:text-[#4ADE80]' : 'text-orange-500 dark:text-[#F59E0B]'}`} />
               ) : eligibility.status === 'Not Eligible' ? (
-                <XCircle className="w-5 h-5 shrink-0 text-red-600" />
+                <XCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-[#EF4444]" />
               ) : (
                 <Info className="w-5 h-5 shrink-0 text-slate-400" />
               )}
@@ -830,12 +830,12 @@ const ScholarshipApplicationForm = () => {
             {/* Checklist */}
             <div className="space-y-3 text-xs font-medium">
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Annual Income limit:</span>
+                <span className="text-slate-500 dark:text-[#A3A3A3]">Annual Income limit:</span>
                 {family.annualIncome ? (
                   Number(family.annualIncome) <= 800000 ? (
                     <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> ₹{Number(family.annualIncome).toLocaleString()}</span>
                   ) : (
-                    <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Exceeded</span>
+                    <span className="text-red-600 dark:text-[#EF4444] font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Exceeded</span>
                   )
                 ) : (
                   <span className="text-slate-400">Blank</span>
@@ -843,12 +843,12 @@ const ScholarshipApplicationForm = () => {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Qualifying Marks (50%):</span>
+                <span className="text-slate-500 dark:text-[#A3A3A3]">Qualifying Marks (50%):</span>
                 {academic.previousYearMarks ? (
                   Number(academic.previousYearMarks) >= 50 ? (
                     <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> {academic.previousYearMarks}%</span>
                   ) : (
-                    <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Failed Cutoff</span>
+                    <span className="text-red-600 dark:text-[#EF4444] font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Failed Cutoff</span>
                   )
                 ) : (
                   <span className="text-slate-400">Blank</span>
@@ -856,11 +856,11 @@ const ScholarshipApplicationForm = () => {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-slate-500">Aadhaar Filled:</span>
+                <span className="text-slate-500 dark:text-[#A3A3A3]">Aadhaar Filled:</span>
                 {personal.aadhaarNumber && personal.aadhaarNumber.length === 12 ? (
                   <span className="text-[#15803D] dark:text-[#4ADE80] font-bold flex items-center gap-1"><CheckCircle2 className="w-3.5 h-3.5" /> Yes</span>
                 ) : (
-                  <span className="text-red-500 font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Incomplete</span>
+                  <span className="text-red-600 dark:text-[#EF4444] font-bold flex items-center gap-1"><XCircle className="w-3.5 h-3.5" /> Incomplete</span>
                 )}
               </div>
             </div>

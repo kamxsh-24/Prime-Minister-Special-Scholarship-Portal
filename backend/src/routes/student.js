@@ -195,6 +195,21 @@ const saveProfileHandler = async (req, res) => {
 
     await profile.save();
     console.log('[DEBUG] MongoDB Update Result:', profile.toObject());
+
+    // Create Audit Log
+    const sectionName = body.sectionName || (body.address ? 'Address Details' : 'Personal Details');
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'profile_updated',
+      ipAddress: req.ip,
+      details: {
+        sectionName,
+        title: 'Profile information updated',
+        description: `${sectionName} was updated`,
+        type: 'success',
+      },
+    });
+
     return res.json({ success: true, message: 'Profile saved successfully.', data: profile });
   } catch (error) {
     console.error('[DEBUG] Error saving profile:', error);
@@ -224,6 +239,127 @@ router.post('/profile/delete-request', async (req, res) => {
   }
 });
 
+const Notification = require('../models/Notification');
+const AuditLog = require('../models/AuditLog');
+
+// @route   GET /api/student/activities
+// @desc    Fetch real recent student activities
+router.get('/activities', async (req, res) => {
+  try {
+    const logs = await AuditLog.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(30);
+
+    const docNameMap = {
+      aadhaar: 'Aadhaar Card',
+      incomeCertificate: 'Income Certificate',
+      casteCertificate: 'Caste Certificate',
+      marksheet: 'Academic Marksheet',
+      bankPassbook: 'Bank Passbook',
+      bonafide: 'Bonafide Certificate',
+      photo: 'Passport Photo',
+    };
+
+    const activities = logs.map((log) => {
+      let title = log.details?.title;
+      let description = log.details?.description;
+      let type = log.details?.type || 'success';
+
+      switch (log.action) {
+        case 'register':
+        case 'account_registered':
+          title = title || 'Application registered';
+          description = description || 'Your PMSSS account was created';
+          type = 'success';
+          break;
+
+        case 'profile_updated':
+          title = title || (log.details?.sectionName ? `${log.details.sectionName} updated` : 'Profile information updated');
+          description = description || 'Personal information was updated';
+          type = 'success';
+          break;
+
+        case 'application_section_saved':
+        case 'section_completed':
+          title = title || (log.details?.sectionName ? `${log.details.sectionName} completed` : 'Application section saved');
+          description = description || 'Application section saved';
+          type = 'success';
+          break;
+
+        case 'document_uploaded': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} uploaded`;
+          description = description || 'Document uploaded successfully';
+          type = 'success';
+          break;
+        }
+
+        case 'document_replaced':
+        case 'document_updated': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} updated`;
+          description = description || 'Document replaced successfully';
+          type = 'info';
+          break;
+        }
+
+        case 'document_removed': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} removed`;
+          description = description || 'Document deleted';
+          type = 'warning';
+          break;
+        }
+
+        case 'document_rejected': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} rejected`;
+          description = log.details?.remarks || description || 'Document rejected during verification';
+          type = 'error';
+          break;
+        }
+
+        case 'submit_application':
+        case 'application_submitted':
+          title = title || 'Application submitted';
+          description = description || 'Submitted for institute verification';
+          type = 'success';
+          break;
+
+        case 'status_changed':
+          title = title || log.details?.statusTitle || 'Application status changed';
+          description = description || log.details?.statusDescription || `Status changed to ${log.details?.newStatus || 'updated'}`;
+          type = log.details?.newStatus === 'rejected' ? 'error' : log.details?.newStatus === 'approved' ? 'success' : 'info';
+          break;
+
+        default:
+          title = title || log.action || 'Activity recorded';
+          description = description || '';
+          break;
+      }
+
+      return {
+        id: log._id,
+        title,
+        description,
+        type,
+        timestamp: log.createdAt,
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: activities,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error fetching activities.', error: error.message });
+  }
+});
+
 // @route   GET /api/student/application
 router.get('/application', async (req, res) => {
   try {
@@ -236,9 +372,6 @@ router.get('/application', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Server error.', error: error.message });
   }
 });
-
-const Notification = require('../models/Notification');
-const AuditLog = require('../models/AuditLog');
 
 // @route   POST /api/student/application
 // @desc    Creates a new application (draft or submitted)

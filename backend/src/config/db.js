@@ -17,12 +17,9 @@ if (process.env.USE_CUSTOM_DNS === 'true') {
 
 const connectDB = async () => {
   try {
+    const mongoUri = process.env.MONGO_URI || 'mongodb+srv://pmsss_db:kamesh123@cluster0.kvagf15.mongodb.net/pmsss_db?retryWrites=true&w=majority&appName=Cluster0';
     console.log("Connecting to MongoDB...");
     console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
-
-    if (!process.env.MONGO_URI) {
-      throw new Error('MONGO_URI is not defined in environment variables');
-    }
 
     // Explicit connection options and retry on transient network failures
     const connectOpts = {
@@ -38,7 +35,7 @@ const connectDB = async () => {
       let lastErr = null;
       while (attempt < retries) {
         try {
-          const c = await mongoose.connect(process.env.MONGO_URI, connectOpts);
+          const c = await mongoose.connect(mongoUri, connectOpts);
           return c;
         } catch (err) {
           attempt += 1;

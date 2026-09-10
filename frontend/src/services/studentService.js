@@ -9,3 +9,4 @@ export const updateApplication = (id, data) => API.put(`/student/application/${i
 export const getApplicationStatus = () => API.get('/student/application/status');
 export const downloadApprovalLetter = () =>
   API.get('/student/application/letter', { responseType: 'blob' });
+export const getActivities = () => API.get('/student/activities');

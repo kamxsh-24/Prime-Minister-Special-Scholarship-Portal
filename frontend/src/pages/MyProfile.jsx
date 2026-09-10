@@ -384,12 +384,12 @@ const MyProfile = () => {
 
   const renderValidationMessage = (field) =>
     validationErrors[field] ? (
-      <p className="mt-1 text-[11px] text-red-500">{validationErrors[field]}</p>
+      <p className="mt-1 text-[11px] text-red-600 dark:text-red-400 font-medium">{validationErrors[field]}</p>
     ) : null;
 
   const getFieldClassName = (fieldName, baseClass = 'form-input') => {
     const hasError = Boolean(validationErrors[fieldName]);
-    return `${baseClass} ${hasError ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : ''}`.trim();
+    return `${baseClass} ${hasError ? 'border-red-500 dark:border-red-500/70 focus:border-red-500 focus:ring-red-200' : ''}`.trim();
   };
 
   if (loading) {

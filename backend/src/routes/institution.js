@@ -74,12 +74,25 @@ router.patch('/applications/:id/verify', async (req, res) => {
 
     await application.save();
 
-    // Create Audit Log
+    // Create Audit Log for Officer
     await AuditLog.create({
       userId: req.user._id,
       action: 'institution_verify',
       ipAddress: req.ip,
       details: { applicationId: application._id, studentName: application.studentId.fullName },
+    });
+
+    // Create Audit Log for Student
+    await AuditLog.create({
+      userId: application.studentId._id || application.studentId,
+      action: 'status_changed',
+      ipAddress: req.ip,
+      details: {
+        newStatus: 'institution_verified',
+        title: 'Institute verification completed',
+        description: `Verified by ${req.user.institution || 'college officer'}`,
+        type: 'info',
+      },
     });
 
     // Create Notification for Student
@@ -133,12 +146,25 @@ router.patch('/applications/:id/reject', async (req, res) => {
 
     await application.save();
 
-    // Create Audit Log
+    // Create Audit Log for Officer
     await AuditLog.create({
       userId: req.user._id,
       action: 'institution_reject',
       ipAddress: req.ip,
       details: { applicationId: application._id, studentName: application.studentId.fullName, remarks },
+    });
+
+    // Create Audit Log for Student
+    await AuditLog.create({
+      userId: application.studentId._id || application.studentId,
+      action: 'status_changed',
+      ipAddress: req.ip,
+      details: {
+        newStatus: 'draft',
+        title: 'Revision requested by college',
+        description: remarks || 'Please edit your application and resubmit',
+        type: 'warning',
+      },
     });
 
     // Create Notification for Student
