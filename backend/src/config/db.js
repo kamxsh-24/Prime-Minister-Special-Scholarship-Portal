@@ -166,7 +166,7 @@ const connectDB = async () => {
           const defaultFaqs = [
             {
               question: 'Am I eligible for this scholarship?',
-              answer: 'To be eligible for PMSSS, you must be a resident of Jammu & Kashmir or Ladakh, have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum. Standard General, Engineering, and Medical degree courses are supported.',
+              answer: 'To be eligible for PMSSS, you must be a resident of India (open to students from all States and Union Territories), have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum. Standard General, Engineering, and Medical degree courses are supported.',
               category: 'eligibility'
             },
             {
@@ -200,10 +200,10 @@ const connectDB = async () => {
           const defaultScholarships = [
             {
               name: 'Prime Minister Special Scholarship Scheme (PMSSS)',
-              description: 'Specifically for students from Jammu & Kashmir and Ladakh pursuing undergraduate professional degrees.',
+              description: 'Scholarship scheme for eligible Indian students across all States and Union Territories pursuing undergraduate professional and general degrees.',
               provider: 'AICTE / Ministry of Education, Govt. of India',
               amount: '₹1,50,000 to ₹3,00,000 per annum',
-              criteria: 'Domicile of J&K/Ladakh, Family income <= 8 LPA, Passed 10+2.',
+              criteria: 'Indian resident (all States/UTs), Family income <= 8 LPA, Passed 10+2.',
               isActive: true
             },
             {

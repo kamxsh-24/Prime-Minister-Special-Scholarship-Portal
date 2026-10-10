@@ -196,16 +196,38 @@ const saveProfileHandler = async (req, res) => {
     await profile.save();
     console.log('[DEBUG] MongoDB Update Result:', profile.toObject());
 
-    // Create Audit Log
-    const sectionName = body.sectionName || (body.address ? 'Address Details' : 'Personal Details');
+    // Create Audit Log with granular section titles
+    let sectionTitle = 'Profile information updated';
+    let sectionDesc = 'Profile details updated successfully';
+
+    if (body.sectionName) {
+      sectionTitle = body.sectionName;
+      sectionDesc = `${body.sectionName} saved`;
+    } else if (body.address && (body.address.permanentAddress || body.address.state || body.address.currentAddress)) {
+      sectionTitle = 'Address information updated';
+      sectionDesc = 'Address details updated successfully';
+    } else if (body.bankName || body.accountNumber || body.ifscCode) {
+      sectionTitle = 'Bank details updated';
+      sectionDesc = 'Bank account information updated';
+    } else if (body.familyIncome || body.fatherName || body.motherName || body.parentOccupation) {
+      sectionTitle = 'Family and income information updated';
+      sectionDesc = 'Family income and parent details updated';
+    } else if (body.collegeName || body.degree || body.department || body.rollNumber || body.yearOfStudy) {
+      sectionTitle = 'Academic information updated';
+      sectionDesc = 'Academic credentials updated';
+    } else if (body.fullName || body.dob || body.gender || body.aadhaar || body.phone || body.email) {
+      sectionTitle = 'Personal information updated';
+      sectionDesc = 'Personal information updated';
+    }
+
     await AuditLog.create({
       userId: req.user._id,
       action: 'profile_updated',
       ipAddress: req.ip,
       details: {
-        sectionName,
-        title: 'Profile information updated',
-        description: `${sectionName} was updated`,
+        sectionName: sectionTitle,
+        title: sectionTitle,
+        description: sectionDesc,
         type: 'success',
       },
     });
@@ -242,9 +264,7 @@ router.post('/profile/delete-request', async (req, res) => {
 const Notification = require('../models/Notification');
 const AuditLog = require('../models/AuditLog');
 
-// @route   GET /api/student/activities
-// @desc    Fetch real recent student activities
-router.get('/activities', async (req, res) => {
+const getActivityLogsHandler = async (req, res) => {
   try {
     const logs = await AuditLog.find({ userId: req.user._id })
       .sort({ createdAt: -1 })
@@ -268,14 +288,14 @@ router.get('/activities', async (req, res) => {
       switch (log.action) {
         case 'register':
         case 'account_registered':
-          title = title || 'Application registered';
+          title = title || 'Application registered successfully';
           description = description || 'Your PMSSS account was created';
           type = 'success';
           break;
 
         case 'profile_updated':
-          title = title || (log.details?.sectionName ? `${log.details.sectionName} updated` : 'Profile information updated');
-          description = description || 'Personal information was updated';
+          title = title || log.details?.sectionName || 'Profile information updated';
+          description = description || log.details?.description || 'Personal information updated';
           type = 'success';
           break;
 
@@ -289,7 +309,7 @@ router.get('/activities', async (req, res) => {
         case 'document_uploaded': {
           const docKey = log.details?.fieldname || log.details?.documentName;
           const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
-          title = title || `${docLabel} uploaded`;
+          title = title || `${docLabel} uploaded successfully`;
           description = description || 'Document uploaded successfully';
           type = 'success';
           break;
@@ -299,7 +319,7 @@ router.get('/activities', async (req, res) => {
         case 'document_updated': {
           const docKey = log.details?.fieldname || log.details?.documentName;
           const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
-          title = title || `${docLabel} updated`;
+          title = title || `${docLabel} replaced successfully`;
           description = description || 'Document replaced successfully';
           type = 'info';
           break;
@@ -325,13 +345,20 @@ router.get('/activities', async (req, res) => {
 
         case 'submit_application':
         case 'application_submitted':
-          title = title || 'Application submitted';
+          title = title || 'Application submitted successfully';
           description = description || 'Submitted for institute verification';
           type = 'success';
           break;
 
+        case 'update_application':
+        case 'save_draft':
+          title = title || (log.action === 'save_draft' ? 'Application draft saved' : 'Application updated');
+          description = description || 'Application details updated';
+          type = 'info';
+          break;
+
         case 'status_changed':
-          title = title || log.details?.statusTitle || 'Application status changed';
+          title = title || log.details?.statusTitle || 'Application status updated';
           description = description || log.details?.statusDescription || `Status changed to ${log.details?.newStatus || 'updated'}`;
           type = log.details?.newStatus === 'rejected' ? 'error' : log.details?.newStatus === 'approved' ? 'success' : 'info';
           break;
@@ -358,7 +385,11 @@ router.get('/activities', async (req, res) => {
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Server error fetching activities.', error: error.message });
   }
-});
+};
+
+// @route   GET /api/student/activities & GET /api/student/activity
+router.get('/activities', getActivityLogsHandler);
+router.get('/activity', getActivityLogsHandler);
 
 // @route   GET /api/student/application
 router.get('/application', async (req, res) => {

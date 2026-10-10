@@ -29,7 +29,6 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'pmsss_jwt_secret_key_2026_su
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'pmsss_jwt_refresh_secret_key_2026_super_secure';
 process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 process.env.CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
-process.env.MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://pmsss_db:kamesh123@cluster0.kvagf15.mongodb.net/pmsss_db?retryWrites=true&w=majority&appName=Cluster0';
 
 const requiredEnvKeys = ['PORT', 'MONGO_URI', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'FRONTEND_URL', 'GEMINI_API_KEY'];
 for (const key of requiredEnvKeys) {
@@ -115,6 +114,136 @@ app.use('/api/public', publicRoutes);
 app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/ai/chatbot', chatbotRoutes);
 
+// Direct top-level activity endpoints for compatibility
+const { protect } = require('./middleware/auth');
+const AuditLog = require('./models/AuditLog');
+
+const getDirectActivityLogs = async (req, res) => {
+  try {
+    const logs = await AuditLog.find({ userId: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(30);
+
+    const docNameMap = {
+      aadhaar: 'Aadhaar Card',
+      incomeCertificate: 'Income Certificate',
+      casteCertificate: 'Caste Certificate',
+      marksheet: 'Academic Marksheet',
+      bankPassbook: 'Bank Passbook',
+      bonafide: 'Bonafide Certificate',
+      photo: 'Passport Photo',
+    };
+
+    const activities = logs.map((log) => {
+      let title = log.details?.title;
+      let description = log.details?.description;
+      let type = log.details?.type || 'success';
+
+      switch (log.action) {
+        case 'register':
+        case 'account_registered':
+          title = title || 'Application registered successfully';
+          description = description || 'Your PMSSS account was created';
+          type = 'success';
+          break;
+
+        case 'profile_updated':
+          title = title || log.details?.sectionName || 'Profile information updated';
+          description = description || log.details?.description || 'Personal information updated';
+          type = 'success';
+          break;
+
+        case 'application_section_saved':
+        case 'section_completed':
+          title = title || (log.details?.sectionName ? `${log.details.sectionName} completed` : 'Application section saved');
+          description = description || 'Application section saved';
+          type = 'success';
+          break;
+
+        case 'document_uploaded': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} uploaded successfully`;
+          description = description || 'Document uploaded successfully';
+          type = 'success';
+          break;
+        }
+
+        case 'document_replaced':
+        case 'document_updated': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} replaced successfully`;
+          description = description || 'Document replaced successfully';
+          type = 'info';
+          break;
+        }
+
+        case 'document_removed': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} removed`;
+          description = description || 'Document deleted';
+          type = 'warning';
+          break;
+        }
+
+        case 'document_rejected': {
+          const docKey = log.details?.fieldname || log.details?.documentName;
+          const docLabel = docNameMap[docKey] || log.details?.documentName || 'Document';
+          title = title || `${docLabel} rejected`;
+          description = log.details?.remarks || description || 'Document rejected during verification';
+          type = 'error';
+          break;
+        }
+
+        case 'submit_application':
+        case 'application_submitted':
+          title = title || 'Application submitted successfully';
+          description = description || 'Submitted for institute verification';
+          type = 'success';
+          break;
+
+        case 'update_application':
+        case 'save_draft':
+          title = title || (log.action === 'save_draft' ? 'Application draft saved' : 'Application updated');
+          description = description || 'Application details updated';
+          type = 'info';
+          break;
+
+        case 'status_changed':
+          title = title || log.details?.statusTitle || 'Application status updated';
+          description = description || log.details?.statusDescription || `Status changed to ${log.details?.newStatus || 'updated'}`;
+          type = log.details?.newStatus === 'rejected' ? 'error' : log.details?.newStatus === 'approved' ? 'success' : 'info';
+          break;
+
+        default:
+          title = title || log.action || 'Activity recorded';
+          description = description || '';
+          break;
+      }
+
+      return {
+        id: log._id,
+        title,
+        description,
+        type,
+        timestamp: log.createdAt,
+      };
+    });
+
+    return res.json({
+      success: true,
+      data: activities,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error fetching activities.', error: error.message });
+  }
+};
+
+app.get('/api/activity', protect, getDirectActivityLogs);
+app.get('/api/activities', protect, getDirectActivityLogs);
+
 // Health check endpoints
 app.get('/api/health', (req, res) => {
   res.json({
@@ -179,44 +308,62 @@ const seedAdmin = async () => {
 const seedFaqs = async () => {
   try {
     const FAQ = require('./models/FAQ');
-    const count = await FAQ.countDocuments();
-    if (count === 0) {
-      console.log('Seeding default chatbot FAQs...');
-      const defaultFaqs = [
-        {
-          question: 'Am I eligible for this scholarship?',
-          answer: 'To be eligible for PMSSS, you must be a resident of Jammu & Kashmir or Ladakh, have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum. Standard General, Engineering, and Medical degree courses are supported.',
-          category: 'eligibility'
-        },
-        {
-          question: 'What documents are required?',
-          answer: 'The required documents are:\n1. Aadhaar Card\n2. Domicile/State Residence Certificate\n3. Income Certificate\n4. Caste/Community Certificate\n5. Class 12 Marksheet\n6. Bank Passbook\n7. Bonafide College Certificate.',
-          category: 'documents'
-        },
-        {
-          question: 'How do I apply?',
-          answer: 'First, navigate to "My Profile" and complete all details to at least 80%. Then, go to "Application", verify your pre-filled details, upload any additional files, and click "Submit Application".',
-          category: 'process'
-        },
-        {
-          question: 'When is the deadline?',
-          answer: 'Scholarship deadlines are set by the Ministry of Education, Government of India. Please monitor the homepage announcements and dashboard notifications for the current registration deadlines.',
-          category: 'deadlines'
-        },
-        {
-          question: 'Why was my application rejected?',
-          answer: 'Common reasons for rejection include: blurred or illegible documents, mismatched names between Aadhaar and academic marksheets, or incorrect bank details. Please check the remarks left by the reviewer, correct the details in your profile, and re-submit.',
-          category: 'general'
-        },
-        {
-          question: 'How can I update my profile?',
-          answer: 'You can update your profile by navigating to the "My Profile" page. Fill in the required fields under the respective tabs, upload any updated documents, and click "Save Profile Changes" at the bottom.',
-          category: 'general'
-        }
-      ];
-      await FAQ.insertMany(defaultFaqs);
-      console.log('✅ FAQ Knowledge Base seeded successfully.');
-    }
+    await FAQ.deleteMany({});
+    console.log('Seeding default chatbot FAQs...');
+    const defaultFaqs = [
+      {
+        question: 'Who is eligible for PMSSS?',
+        answer: "Eligibility depends on the current PMSSS scheme rules and the applicant's qualification/category. I can help you check your eligibility based on your academic qualification, domicile/residency requirements, income criteria, and other applicable conditions.",
+        category: 'eligibility'
+      },
+      {
+        question: 'Am I eligible for this scholarship?',
+        answer: "Eligibility depends on the current PMSSS scheme rules and the applicant's qualification/category. I can help you check your eligibility based on your academic qualification, domicile/residency requirements, income criteria, and other applicable conditions.",
+        category: 'eligibility'
+      },
+      {
+        question: 'What documents are required?',
+        answer: 'The required documents are:\n1. Aadhaar Card\n2. Domicile/State Residence Certificate\n3. Income Certificate\n4. Caste/Community Certificate (if applicable)\n5. Class 12 Marksheet\n6. Bank Passbook\n7. Bonafide College Certificate / Passport Photo.',
+        category: 'documents'
+      },
+      {
+        question: 'How do I apply?',
+        answer: 'First, navigate to "My Profile" and complete all details to at least 80%. Then, go to "Application", verify your pre-filled details, upload any additional files, and click "Submit Application".',
+        category: 'process'
+      },
+      {
+        question: 'How do I track my application?',
+        answer: 'You can check your application timeline on the "Track Status" section of your dashboard. Statuses progress from Draft ➔ Submitted ➔ Institute Verification ➔ Officer Verification ➔ Approved ➔ Scholarship Disbursed.',
+        category: 'process'
+      },
+      {
+        question: 'What does Institute Verification mean?',
+        answer: 'Institute Verification means your college/institution nodal officer reviews your bonafide status, academic enrollment details, and uploaded certificates to verify your active student status.',
+        category: 'process'
+      },
+      {
+        question: 'What does Officer Verification mean?',
+        answer: 'Officer Verification is the central scholarship administration review step where government officials review your verified application before issuing final approval and DBT disbursement.',
+        category: 'process'
+      },
+      {
+        question: 'When is the deadline?',
+        answer: 'Scholarship registration deadlines are set by the Ministry of Education, Government of India. Please monitor the homepage announcements and dashboard notifications for current registration dates.',
+        category: 'deadlines'
+      },
+      {
+        question: 'Why was my application rejected?',
+        answer: 'Common reasons for rejection include: blurred or illegible documents, mismatched names between Aadhaar and marksheets, or incorrect bank details. Please check reviewer remarks under "Track Status" or "My Profile", fix the issues, and resubmit.',
+        category: 'general'
+      },
+      {
+        question: 'How can I update my profile?',
+        answer: 'You can update your profile by navigating to the "My Profile" page. Fill in the required fields under the respective tabs, upload any updated documents, and click "Save Profile Changes" at the bottom.',
+        category: 'general'
+      }
+    ];
+    await FAQ.insertMany(defaultFaqs);
+    console.log('✅ FAQ Knowledge Base seeded successfully.');
   } catch (error) {
     console.error('Failed to seed FAQs:', error.message);
   }

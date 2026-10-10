@@ -26,56 +26,40 @@ const callGemini = async (apiKey, systemPrompt, contentsOrMessage) => {
     contents,
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 600,
+      maxOutputTokens: 800,
     },
   };
 
-  if (typeof fetch !== 'undefined') {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Gemini API error: ${res.status} - ${errorText}`);
-    }
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-  } else {
-    const https = require('https');
-    return new Promise((resolve, reject) => {
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const req = https.request(
-        url,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        (res) => {
-          let body = '';
-          res.on('data', (chunk) => { body += chunk; });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              try {
-                const data = JSON.parse(body);
-                resolve(data.candidates?.[0]?.content?.parts?.[0]?.text);
-              } catch (e) {
-                reject(e);
-              }
-            } else {
-              reject(new Error(`Gemini API error: ${res.statusCode} - ${body}`));
-            }
-          });
+  const models = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  let lastErr = null;
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (responseText) {
+          return responseText;
         }
-      );
-      req.on('error', (err) => reject(err));
-      req.write(JSON.stringify(payload));
-      req.end();
-    });
+      } else {
+        const errText = await res.text();
+        console.warn(`Gemini model ${model} returned error ${res.status}: ${errText}`);
+        lastErr = new Error(`Gemini API error (${model}): ${res.status} - ${errText}`);
+      }
+    } catch (err) {
+      console.warn(`Gemini model ${model} fetch failed:`, err.message);
+      lastErr = err;
+    }
   }
+
+  throw lastErr || new Error('All Gemini model candidates failed.');
 };
 
 const buildGeminiContents = (messages) => {
@@ -172,15 +156,28 @@ router.post('/message', async (req, res) => {
 
     const geminiApiKey = process.env.GEMINI_API_KEY;
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-    const systemPrompt = `You are a virtual assistant for the Prime Minister Special Scholarship Scheme (PMSS / PMSSS) portal of the Government of India.
-You must answer queries professionally, accurately, and assistively in the language requested (User language: ${language}).
-Rules of PMSSS:
-1. Eligibility: J&K and Ladakh residents who passed 10+2 or diploma.
-2. Income limit: Total family income <= 8 Lakhs per annum.
-3. Documents: Aadhaar, domicile, income certificate, marksheet, bank passbook, bonafide.
-4. Process: Student applies -> College verifies -> Central admin approves -> Disbursed via DBT.
+    const systemPrompt = `You are the official AI assistant for the PMSSS Scholarship Management Portal (Prime Minister Special Scholarship Scheme), Government of India.
 
-Keep your response friendly, clear, and structured. Direct candidates to contact support@pmss.gov.in for specific issues.`;
+CRITICAL ELIGIBILITY & SCOPE INSTRUCTIONS:
+1. THIS PORTAL IS FOR ELIGIBLE INDIAN STUDENTS ACROSS ALL STATES AND UNION TERRITORIES OF INDIA.
+2. DO NOT assume or state that applicants MUST be residents of Jammu & Kashmir. Do NOT state "You must be a resident of Jammu & Kashmir" or require J&K residency unless the user specifically asks about J&K specific quotas.
+3. When asked "Who is eligible for PMSSS?" or general eligibility questions, respond:
+"Eligibility depends on the current PMSSS scheme rules and the applicant's qualification/category. I can help you check your eligibility based on your academic qualification, domicile/residency requirements, income criteria, and other applicable conditions."
+4. Never state a student is eligible or ineligible without enough information. Ask clarifying questions if state, qualification, or income details are missing.
+5. Clearly distinguish between:
+   - General PMSSS information
+   - Applicant-specific eligibility criteria
+   - Application process & registration steps
+   - Required document verification
+   - Application status tracking & officer verification
+6. Key project portal rules:
+   - Family income limit: <= ₹8,00,000 per annum.
+   - Academic qualification: Class 12 / Diploma passed from a recognized board/institution.
+   - Minimum profile completion required to submit: 80%.
+   - Required documents: Aadhaar Card, Domicile/Residence Certificate, Income Certificate, Caste/Community Certificate (if applicable), Academic Marksheet, Bank Passbook, Passport Photo / Bonafide.
+   - Verification flow: Student Registration -> Profile Completion (80%+) -> Application Submit -> Institute Verification -> Officer Review -> Approval & Scholarship Disbursement via Direct Benefit Transfer (DBT).
+
+Respond concisely, accurately, and politely in the requested language (User language: ${language}). Keep answers directly relevant to this PMSSS portal.`;
 
     // 1. Try Gemini first (prioritized, conversational)
     if (geminiApiKey && geminiApiKey.trim() !== '') {
@@ -230,8 +227,8 @@ Keep your response friendly, clear, and structured. Direct candidates to contact
       if (cleanQuery.includes('income') || cleanQuery.includes('salary') || cleanQuery.includes('आय') || cleanQuery.includes('வருமானம்')) {
         reply = 'The family income limit for the PMSS scholarship is ₹8,00,000 per annum. You must upload a valid Income Certificate issued by a competent authority.';
       } else if (cleanQuery.includes('eligible') || cleanQuery.includes('criteria') || cleanQuery.includes('पात्र') || cleanQuery.includes('தகுதி')) {
-        reply = 'To be eligible for PMSSS, you must be a resident of J&K or Ladakh, have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum.';
-      } else if (cleanQuery.includes('document') || cleanQuery.includes('file') || cleanQuery.includes('दस्ताвеज़') || cleanQuery.includes('ஆவணம்')) {
+        reply = "Eligibility depends on the current PMSSS scheme rules and the applicant's qualification/category. I can help you check your eligibility based on your academic qualification, domicile/residency requirements, income criteria, and other applicable conditions.";
+      } else if (cleanQuery.includes('document') || cleanQuery.includes('file') || cleanQuery.includes('दस्तावेज़') || cleanQuery.includes('ஆவணம்')) {
         reply = 'The required documents are:\n1. Aadhaar Card\n2. Domicile/State Residence Certificate\n3. Income Certificate\n4. Caste Certificate (if applicable)\n5. Class 12 Mark Sheet\n6. Bank Passbook\n7. Bonafide College Certificate.';
       } else if (cleanQuery.includes('status') || cleanQuery.includes('track') || cleanQuery.includes('स्थिति') || cleanQuery.includes('நிலை')) {
         reply = 'You can check your application timeline on the "Status" tab of your dashboard. Statuses range from Draft ➔ Submitted ➔ Verification ➔ Review ➔ Approved ➔ Released.';

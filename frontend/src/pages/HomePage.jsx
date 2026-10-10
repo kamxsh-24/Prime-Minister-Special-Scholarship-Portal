@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Navbar from '../components/layout/Navbar';
 import { useTheme } from '../context/ThemeContext';
 import {
   GraduationCap,
   Check,
-  Search,
   ChevronRight,
   User,
   FileText,
@@ -75,7 +74,7 @@ const faqs = [
   },
   {
     q: 'How can I track my application status?',
-    a: 'You can enter your Application ID in the status lookup box above or sign in to your dashboard.',
+    a: 'You can sign in to your student dashboard to track your application status.',
   },
   {
     q: 'How is eligibility determined?',
@@ -86,18 +85,7 @@ const faqs = [
 const HomePage = () => {
   const { user } = useSelector((s) => s.auth);
   const { theme } = useTheme();
-  const navigate = useNavigate();
-  const [appIdInput, setAppIdInput] = useState('');
   const [activeFaq, setActiveFaq] = useState(null);
-
-  const handleCheckStatus = (e) => {
-    e.preventDefault();
-    if (user) {
-      navigate('/dashboard/status');
-    } else {
-      navigate('/login');
-    }
-  };
 
   const isDarkMode = theme === 'dark';
   const heroImgSrc = isDarkMode ? '/students-dark.png' : '/students-light.png';
@@ -176,46 +164,7 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* CHECK APPLICATION STATUS CARD */}
-        <section className="bg-white dark:bg-[#121212] border border-[#D9E2EC] dark:border-[#333333] rounded-2xl p-6 sm:p-8 shadow-card">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            
-            {/* Card Left Title & Icon */}
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-[#161616] text-[#0D6EFD] dark:text-[#4FC3F7] border border-blue-100 dark:border-[#333333] flex items-center justify-center flex-shrink-0">
-                <FileText className="h-6 w-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0B2545] dark:text-white">
-                  Check Application Status
-                </h3>
-                <p className="text-xs text-[#334E68] dark:text-[#BDBDBD] mt-0.5">
-                  Enter your Application ID to know the current status
-                </p>
-              </div>
-            </div>
 
-            {/* Input & Button Form */}
-            <form onSubmit={handleCheckStatus} className="w-full md:w-auto flex-1 max-w-md flex items-center gap-3">
-              <input
-                type="text"
-                placeholder="Enter Application ID (e.g. PMSSS-2026-000123)"
-                value={appIdInput}
-                onChange={(e) => setAppIdInput(e.target.value)}
-                className="form-input text-xs sm:text-sm py-2.5"
-                id="home-status-input"
-              />
-              <button
-                type="submit"
-                className="btn-primary whitespace-nowrap text-xs sm:text-sm px-5 py-2.5 flex items-center gap-1.5"
-                id="home-check-btn"
-              >
-                <Search className="h-4 w-4" />
-                Check Status
-              </button>
-            </form>
-          </div>
-        </section>
 
         {/* HOW IT WORKS SECTION */}
         <section className="py-4">

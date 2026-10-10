@@ -30,7 +30,22 @@ const RecentActivityList = ({ refreshTrigger }) => {
 
   useEffect(() => {
     fetchActivities();
+
+    const handleAutoRefresh = () => {
+      fetchActivities();
+    };
+
+    window.addEventListener('pmsss-profile-updated', handleAutoRefresh);
+    window.addEventListener('pmsss-document-updated', handleAutoRefresh);
+    window.addEventListener('pmsss-application-updated', handleAutoRefresh);
+
+    return () => {
+      window.removeEventListener('pmsss-profile-updated', handleAutoRefresh);
+      window.removeEventListener('pmsss-document-updated', handleAutoRefresh);
+      window.removeEventListener('pmsss-application-updated', handleAutoRefresh);
+    };
   }, [refreshTrigger]);
+
 
   const renderBadgeIcon = (type) => {
     switch (type) {
@@ -117,7 +132,7 @@ const RecentActivityList = ({ refreshTrigger }) => {
         {!loading && !error && displayedActivities.length === 0 && (
           <div className="py-8 text-center px-4">
             <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-              No activity yet.
+              No recent activity yet.
             </p>
             <p className="text-[11px] text-gray-400 dark:text-[#737373] mt-1 leading-snug">
               Your recent application activity will appear here.

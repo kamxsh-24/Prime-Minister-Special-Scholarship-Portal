@@ -42,7 +42,7 @@ const seed = async () => {
       const defaultFaqs = [
         {
           question: 'Am I eligible for this scholarship?',
-          answer: 'To be eligible for PMSSS, you must be a resident of Jammu & Kashmir or Ladakh, have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum. Standard General, Engineering, and Medical degree courses are supported.',
+          answer: 'To be eligible for PMSSS, you must be a resident of India (open to students from all States and Union Territories), have passed Class 12 or equivalent, and have a family income under ₹8,00,000 per annum. Standard General, Engineering, and Medical degree courses are supported.',
           category: 'eligibility'
         },
         {

@@ -24,56 +24,40 @@ const callGemini = async (apiKey, systemPrompt, contentsOrMessage) => {
     contents,
     generationConfig: {
       temperature: 0.3,
-      maxOutputTokens: 600,
+      maxOutputTokens: 800,
     },
   };
 
-  if (typeof fetch !== 'undefined') {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Gemini API error: ${res.status} - ${errorText}`);
-    }
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text;
-  } else {
-    const https = require('https');
-    return new Promise((resolve, reject) => {
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const req = https.request(
-        url,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-        (res) => {
-          let body = '';
-          res.on('data', (chunk) => { body += chunk; });
-          res.on('end', () => {
-            if (res.statusCode >= 200 && res.statusCode < 300) {
-              try {
-                const data = JSON.parse(body);
-                resolve(data.candidates?.[0]?.content?.parts?.[0]?.text);
-              } catch (e) {
-                reject(e);
-              }
-            } else {
-              reject(new Error(`Gemini API error: ${res.statusCode} - ${body}`));
-            }
-          });
+  const models = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  let lastErr = null;
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (responseText) {
+          return responseText;
         }
-      );
-      req.on('error', (err) => reject(err));
-      req.write(JSON.stringify(payload));
-      req.end();
-    });
+      } else {
+        const errText = await res.text();
+        console.warn(`Gemini model ${model} returned error ${res.status}: ${errText}`);
+        lastErr = new Error(`Gemini API error (${model}): ${res.status} - ${errText}`);
+      }
+    } catch (err) {
+      console.warn(`Gemini model ${model} fetch failed:`, err.message);
+      lastErr = err;
+    }
   }
+
+  throw lastErr || new Error('All Gemini model candidates failed.');
 };
 
 const buildGeminiContents = (messages) => {
@@ -279,7 +263,7 @@ router.get('/recommendations', async (req, res) => {
 
     // Extract profile values or fall back to user values/defaults
     const category = profile?.category || req.user.category || 'OBC';
-    const state = profile?.address?.state || req.user.state || 'Jammu & Kashmir';
+    const state = profile?.address?.state || req.user.state || 'All India';
     const degree = profile?.degree || req.user.course || 'B.Tech';
     const cgpa = (profile?.cgpa !== undefined && profile?.cgpa !== null) ? profile.cgpa : 7.0;
     const familyIncome = (profile?.familyIncome !== undefined && profile?.familyIncome !== null) ? profile.familyIncome : 250000;
@@ -287,14 +271,12 @@ router.get('/recommendations', async (req, res) => {
     const scholarships = [
       {
         name: 'Prime Minister Special Scholarship Scheme (PMSSS)',
-        description: 'Specifically for students from Jammu & Kashmir and Ladakh pursuing undergraduate professional degrees.',
+        description: 'Scholarship scheme for eligible Indian students across all States and Union Territories pursuing undergraduate professional and general degrees.',
         provider: 'AICTE / Ministry of Education, Govt. of India',
         amount: '₹1,50,000 to ₹3,00,000 per annum',
-        criteria: 'Domicile of J&K/Ladakh, Family income <= 8 LPA, Passed 10+2.',
+        criteria: 'Indian resident (all States/UTs), Family income <= 8 LPA, Passed 10+2.',
         calculateMatch: () => {
-          let score = 0;
-          // State Check: 40% weight
-          if (['Jammu & Kashmir', 'Ladakh'].includes(state)) score += 40;
+          let score = 40; // All Indian states eligible
           // Income Check: 30% weight
           if (familyIncome <= 800000) score += 30;
           // CGPA Check: 20% weight (assuming passing threshold)

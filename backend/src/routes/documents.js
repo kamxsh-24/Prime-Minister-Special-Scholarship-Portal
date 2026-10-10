@@ -198,4 +198,65 @@ router.get('/:applicationId', protect, async (req, res) => {
   }
 });
 
+// @route   DELETE /api/documents/:docKey
+// @access  Protected (Student)
+router.delete('/:docKey', protect, async (req, res) => {
+  try {
+    const { docKey } = req.params;
+    const StudentProfile = require('../models/StudentProfile');
+    const AuditLog = require('../models/AuditLog');
+
+    const docNameMap = {
+      aadhaar: 'Aadhaar Card',
+      incomeCertificate: 'Income Certificate',
+      casteCertificate: 'Caste Certificate',
+      marksheet: 'Academic Marksheet',
+      bankPassbook: 'Bank Passbook',
+      bonafide: 'Bonafide Certificate',
+      photo: 'Passport Photo',
+    };
+
+    const docLabel = docNameMap[docKey] || docKey;
+
+    const profile = await StudentProfile.findOne({ studentId: req.user._id });
+    if (profile) {
+      if (docKey === 'photo') {
+        profile.profilePhoto = '';
+      } else if (profile.documents && profile.documents[docKey]) {
+        delete profile.documents[docKey];
+        profile.markModified('documents');
+      }
+      await profile.save();
+    }
+
+    const application = await Application.findOne({ studentId: req.user._id });
+    if (application && application.documents && application.documents[docKey]) {
+      delete application.documents[docKey];
+      application.markModified('documents');
+      await application.save();
+    }
+
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'document_removed',
+      ipAddress: req.ip,
+      details: {
+        documentName: docLabel,
+        fieldname: docKey,
+        title: `${docLabel} deleted`,
+        description: 'Document removed from profile',
+        type: 'warning',
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: `${docLabel} deleted successfully.`,
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Server error deleting document.', error: error.message });
+  }
+});
+
 module.exports = router;
+
