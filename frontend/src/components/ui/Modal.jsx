@@ -48,15 +48,15 @@ const Modal = ({
       aria-modal="true"
       aria-labelledby="modal-title"
     >
-      <div className={`bg-white rounded-2xl shadow-card-lg w-full ${sizeClass} ${className} animate-slide-up overflow-hidden`}>
+      <div className={`bg-white dark:bg-[#161616] text-gray-900 dark:text-white rounded-2xl shadow-card-lg w-full ${sizeClass} ${className} animate-slide-up overflow-hidden`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 id="modal-title" className="text-base font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#333333]">
+          <h2 id="modal-title" className="text-base font-semibold text-gray-900 dark:text-white">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+            className="p-1.5 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#252525] rounded-lg transition-all"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" />
@@ -64,11 +64,11 @@ const Modal = ({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">{children}</div>
+        <div className="px-6 py-5 max-h-[70vh] overflow-y-auto text-sm text-gray-700 dark:text-gray-200">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50">
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-[#333333] flex justify-end gap-3 bg-gray-50 dark:bg-[#101010]">
             {footer}
           </div>
         )}

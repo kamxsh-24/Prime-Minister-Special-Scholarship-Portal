@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Navbar from '../components/layout/Navbar';
+import Modal from '../components/ui/Modal';
 import { useTheme } from '../context/ThemeContext';
 import {
   GraduationCap,
@@ -86,6 +87,18 @@ const HomePage = () => {
   const { user } = useSelector((s) => s.auth);
   const { theme } = useTheme();
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeModal, setActiveModal] = useState(null);
+
+  const scrollToSection = (id) => {
+    if (id === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const isDarkMode = theme === 'dark';
   const heroImgSrc = isDarkMode ? '/students-dark.png' : '/students-light.png';
@@ -99,7 +112,7 @@ const HomePage = () => {
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-6 pb-12 space-y-12">
         
         {/* HERO SECTION */}
-        <section className="pt-6 pb-8 lg:py-12">
+        <section id="home-top" className="pt-6 pb-8 lg:py-12">
           <div className="grid lg:grid-cols-12 gap-8 items-center">
             
             {/* Hero Left Content */}
@@ -167,7 +180,7 @@ const HomePage = () => {
 
 
         {/* HOW IT WORKS SECTION */}
-        <section className="py-4">
+        <section id="how-it-works" className="py-4">
           <div className="text-center mb-8">
             <h2 className="text-xl font-bold text-[#0B2545] dark:text-white font-display">
               How It Works
@@ -208,7 +221,7 @@ const HomePage = () => {
         </section>
 
         {/* ELIGIBILITY HIGHLIGHTS + ANNOUNCEMENTS */}
-        <section className="grid lg:grid-cols-2 gap-6">
+        <section id="eligibility" className="grid lg:grid-cols-2 gap-6">
           
           {/* Left Card: Eligibility Highlights */}
           <div className="bg-[#F8FAFC] dark:bg-[#121212] border border-[#D9E2EC] dark:border-[#333333] rounded-2xl p-6 sm:p-8">
@@ -245,16 +258,19 @@ const HomePage = () => {
               </div>
             </div>
 
-            <div className="pt-4">
-              <a href="#announcements" onClick={(e) => { e.preventDefault(); alert('Latest PMSSS notices for 2026-27 session are updated.'); }} className="text-xs font-bold text-[#0D6EFD] dark:text-[#4FC3F7] hover:underline flex items-center gap-1">
-                View All Announcements →
-              </a>
+            <div id="announcements" className="pt-4">
+              <button
+                onClick={() => scrollToSection('faq')}
+                className="text-xs font-bold text-[#0D6EFD] dark:text-[#4FC3F7] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                View All Announcements & FAQs →
+              </button>
             </div>
           </div>
         </section>
 
         {/* FREQUENTLY ASKED QUESTIONS */}
-        <section className="bg-[#F8FAFC] dark:bg-[#121212] border border-[#D9E2EC] dark:border-[#333333] rounded-2xl p-6 sm:p-8">
+        <section id="faq" className="bg-[#F8FAFC] dark:bg-[#121212] border border-[#D9E2EC] dark:border-[#333333] rounded-2xl p-6 sm:p-8">
           <h2 className="text-base font-bold text-[#0B2545] dark:text-white mb-6 font-display">
             Frequently Asked Questions
           </h2>
@@ -285,7 +301,7 @@ const HomePage = () => {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-white dark:bg-[#000000] border-t border-[#D9E2EC] dark:border-[#333333] pt-12 transition-colors">
+      <footer id="contact" className="bg-white dark:bg-[#000000] border-t border-[#D9E2EC] dark:border-[#333333] pt-12 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 text-xs text-[#334E68] dark:text-[#BDBDBD]">
             
@@ -309,11 +325,31 @@ const HomePage = () => {
             <div className="space-y-2.5">
               <p className="font-bold text-[#0B2545] dark:text-white text-xs uppercase tracking-wider">Quick Links</p>
               <ul className="space-y-1.5">
-                <li><Link to="/" className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Home</Link></li>
-                <li><a href="#eligibility" onClick={(e) => { e.preventDefault(); alert('PMSSS eligibility details.'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Eligibility</a></li>
-                <li><a href="#process" onClick={(e) => { e.preventDefault(); alert('Application workflow.'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Application Process</a></li>
-                <li><a href="#help" onClick={(e) => { e.preventDefault(); alert('Contact help@pmsss.gov.in'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Help</a></li>
-                <li><a href="#contact" onClick={(e) => { e.preventDefault(); alert('Call 1800-123-4567'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Contact</a></li>
+                <li>
+                  <button onClick={() => scrollToSection('top')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Home
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('eligibility')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Eligibility
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('how-it-works')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Application Process
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('faq')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Help
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('contact')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Contact
+                  </button>
+                </li>
               </ul>
             </div>
 
@@ -321,9 +357,21 @@ const HomePage = () => {
             <div className="space-y-2.5">
               <p className="font-bold text-[#0B2545] dark:text-white text-xs uppercase tracking-wider">Resources</p>
               <ul className="space-y-1.5">
-                <li><a href="#manual" onClick={(e) => { e.preventDefault(); alert('User Manual PDF download.'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">User Manual</a></li>
-                <li><a href="#guidelines" onClick={(e) => { e.preventDefault(); alert('PMSSS Guidelines 2026.'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">Guidelines</a></li>
-                <li><a href="#faq" onClick={(e) => { e.preventDefault(); alert('FAQ Center'); }} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">FAQ</a></li>
+                <li>
+                  <button onClick={() => setActiveModal('userManual')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    User Manual
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setActiveModal('guidelines')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    Guidelines
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('faq')} className="hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7] cursor-pointer transition-colors">
+                    FAQ
+                  </button>
+                </li>
               </ul>
             </div>
 
@@ -333,11 +381,15 @@ const HomePage = () => {
               <div className="space-y-1.5">
                 <p className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 text-[#0D6EFD]" />
-                  <span>help@pmsss.gov.in</span>
+                  <a href="mailto:help@pmsss.gov.in" className="hover:underline hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">
+                    help@pmsss.gov.in
+                  </a>
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-3.5 w-3.5 text-[#0D6EFD]" />
-                  <span>1800-123-4567</span>
+                  <a href="tel:18001234567" className="hover:underline hover:text-[#0D6EFD] dark:hover:text-[#4FC3F7]">
+                    1800-123-4567
+                  </a>
                 </p>
                 <p className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-[#0D6EFD]" />
@@ -347,10 +399,18 @@ const HomePage = () => {
 
               <p className="font-bold text-[#0B2545] dark:text-white text-xs uppercase tracking-wider pt-2">Follow Us</p>
               <div className="flex items-center gap-3 text-[#0D6EFD] dark:text-[#4FC3F7]">
-                <a href="#facebook" onClick={(e) => e.preventDefault()} aria-label="Facebook" className="hover:opacity-80"><Facebook className="h-4 w-4" /></a>
-                <a href="#twitter" onClick={(e) => e.preventDefault()} aria-label="Twitter" className="hover:opacity-80"><Twitter className="h-4 w-4" /></a>
-                <a href="#youtube" onClick={(e) => e.preventDefault()} aria-label="YouTube" className="hover:opacity-80"><Youtube className="h-4 w-4" /></a>
-                <a href="#instagram" onClick={(e) => e.preventDefault()} aria-label="Instagram" className="hover:opacity-80"><Instagram className="h-4 w-4" /></a>
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="hover:opacity-80 transition-opacity">
+                  <Facebook className="h-4 w-4" />
+                </a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="hover:opacity-80 transition-opacity">
+                  <Twitter className="h-4 w-4" />
+                </a>
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="hover:opacity-80 transition-opacity">
+                  <Youtube className="h-4 w-4" />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="hover:opacity-80 transition-opacity">
+                  <Instagram className="h-4 w-4" />
+                </a>
               </div>
             </div>
 
@@ -362,13 +422,115 @@ const HomePage = () => {
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-xs text-gray-300 gap-2">
             <p>© 2026 PMSSS. All rights reserved.</p>
             <div className="flex gap-4">
-              <a href="#privacy" onClick={(e) => e.preventDefault()} className="hover:underline">Privacy Policy</a>
+              <button onClick={() => setActiveModal('privacy')} className="hover:underline cursor-pointer">
+                Privacy Policy
+              </button>
               <span>|</span>
-              <a href="#terms" onClick={(e) => e.preventDefault()} className="hover:underline">Terms & Conditions</a>
+              <button onClick={() => setActiveModal('terms')} className="hover:underline cursor-pointer">
+                Terms & Conditions
+              </button>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* FOOTER MODALS */}
+      {/* 1. User Manual Modal */}
+      <Modal
+        isOpen={activeModal === 'userManual'}
+        onClose={() => setActiveModal(null)}
+        title="PMSSS Student User Manual & Portal Guide"
+        size="lg"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm">Step 1: Student Registration</h4>
+            <p className="mt-1 leading-relaxed">Register on the PMSSS Portal with your basic personal details, Aadhaar card number, Class 12 roll number, and valid contact information. Verify through OTP.</p>
+          </div>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm">Step 2: Fill Application Form</h4>
+            <p className="mt-1 leading-relaxed">Log in to your student dashboard to complete personal, academic, and family income details. Ensure all entered information matches your official certificates.</p>
+          </div>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm">Step 3: Document Upload</h4>
+            <p className="mt-1 leading-relaxed">Upload clear scanned copies of required documents: Domicile Certificate, Income Certificate (under ₹8 Lakhs/year), Class 10 & 12 Marksheets, and Bank Passbook.</p>
+          </div>
+          <div className="border-b border-gray-200 dark:border-gray-700 pb-3">
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm">Step 4: Document Verification</h4>
+            <p className="mt-1 leading-relaxed">Visit the nearest Facilitation Center with original documents for physical/online verification. Obtain your verification acknowledgment receipt.</p>
+          </div>
+          <div>
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm">Step 5: Choice Filling & Seat Allotment</h4>
+            <p className="mt-1 leading-relaxed">Participate in online choice filling for courses & colleges. Check merit rank and seat allocation status on your dashboard.</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 2. Guidelines Modal */}
+      <Modal
+        isOpen={activeModal === 'guidelines'}
+        onClose={() => setActiveModal(null)}
+        title="PMSSS Scheme Guidelines 2026-27"
+        size="lg"
+      >
+        <div className="space-y-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+          <div>
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm mb-1">1. Academic & Income Eligibility</h4>
+            <ul className="list-disc pl-5 space-y-1 leading-relaxed">
+              <li>Must have passed 10+2 examination from recognized State/Central Board.</li>
+              <li>Annual family income from all sources must not exceed ₹8.00 Lakh per annum.</li>
+              <li>Open for eligible candidates seeking higher education in General, Engineering, and Medical streams.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm mb-1">2. Financial Assistance Rates</h4>
+            <ul className="list-disc pl-5 space-y-1 leading-relaxed">
+              <li><strong>General Degree Courses:</strong> Academic Fee up to ₹30,000/year.</li>
+              <li><strong>Engineering / Professional Courses:</strong> Academic Fee up to ₹1,25,000/year.</li>
+              <li><strong>Medical / BDS / Nursing:</strong> Academic Fee up to ₹3,000,000/year.</li>
+              <li><strong>Maintenance Allowance:</strong> ₹1,00,000/year paid directly to student's Aadhaar-seeded bank account in two installments.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-[#0B2545] dark:text-white text-sm mb-1">3. Important Rules</h4>
+            <p className="leading-relaxed">Students admitted through PMSSS centralized counseling only are eligible for financial disbursement. Transfer of college without prior AICTE permission is prohibited.</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 3. Privacy Policy Modal */}
+      <Modal
+        isOpen={activeModal === 'privacy'}
+        onClose={() => setActiveModal(null)}
+        title="Privacy Policy"
+        size="md"
+      >
+        <div className="space-y-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+          <p>This Privacy Policy outlines how the PMSSS Management Portal collects, stores, and protects applicant data.</p>
+          <h4 className="font-bold text-[#0B2545] dark:text-white">Data Security & Privacy</h4>
+          <p>All sensitive information including Aadhaar details, financial bank details, and personal records are encrypted and stored in compliance with Government security standards.</p>
+          <h4 className="font-bold text-[#0B2545] dark:text-white">Information Sharing</h4>
+          <p>Data is strictly used for scholarship eligibility evaluation, document verification, and direct benefit transfer (DBT) processing by authorized AICTE systems.</p>
+        </div>
+      </Modal>
+
+      {/* 4. Terms & Conditions Modal */}
+      <Modal
+        isOpen={activeModal === 'terms'}
+        onClose={() => setActiveModal(null)}
+        title="Terms & Conditions"
+        size="md"
+      >
+        <div className="space-y-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200 leading-relaxed">
+          <p>By using the Prime Minister Special Scholarship Scheme (PMSSS) portal, applicants agree to the following terms:</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>All submitted information and uploaded documents must be authentic and verifiable.</li>
+            <li>Submission of forged certificates will result in immediate disqualification and legal action.</li>
+            <li>Renewal of scholarship for subsequent academic years requires satisfactory attendance and academic promotion.</li>
+            <li>Beneficiaries cannot avail double financial benefits from any other scholarship scheme.</li>
+          </ul>
+        </div>
+      </Modal>
     </div>
   );
 };
