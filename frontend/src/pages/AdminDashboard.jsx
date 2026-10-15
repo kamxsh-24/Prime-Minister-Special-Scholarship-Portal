@@ -358,8 +358,8 @@ const AdminDashboard = () => {
                         <tr key={app._id} className="hover:bg-slate-50/50 dark:hover:bg-[#0B1524] transition-colors">
                           <td className="p-4">
                             <div>
-                              <p className="font-bold text-slate-800 dark:text-white">{app.studentId?.fullName || '—'}</p>
-                              <p className="text-[10px] text-slate-400 font-normal mt-0.5">{app.studentId?.email}</p>
+                              <p className="font-bold text-slate-800 dark:text-white">{app.studentId?.fullName || app.personalDetails?.fullName || '—'}</p>
+                              <p className="text-[10px] text-slate-400 font-normal mt-0.5">{app.studentId?.email || app.personalDetails?.email || '—'}</p>
                             </div>
                           </td>
                           <td className="p-4 text-slate-600 dark:text-slate-300 max-w-[200px] truncate">
@@ -413,7 +413,7 @@ const AdminDashboard = () => {
                 {fraudApplications.slice(0, 3).map((app) => (
                   <div key={app._id} className="p-3 bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900 rounded-2xl space-y-1.5">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-slate-800 dark:text-white text-[11px]">{app.studentId?.fullName}</span>
+                      <span className="font-bold text-slate-800 dark:text-white text-[11px]">{app.studentId?.fullName || app.personalDetails?.fullName || 'Student'}</span>
                       <span className="px-1.5 py-0.5 bg-red-500 text-white rounded text-[8px] font-black uppercase">CRITICAL</span>
                     </div>
                     {app.fraudFlags.slice(0, 1).map((flag, idx) => (

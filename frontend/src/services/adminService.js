@@ -41,8 +41,39 @@ export const getAnalyticsDashboard = (params) =>
   API.get('/admin/analytics/dashboard', { params });
 
 // Dedicated Verification Module APIs
-export const getVerificationDashboard = () =>
-  API.get('/admin/verifications/dashboard');
+export const getVerificationDashboard = async () => {
+  try {
+    return await API.get('/admin/verifications/dashboard');
+  } catch (error) {
+    if (error.response?.status === 404) {
+      // Fallback to /admin/stats if verification routes are not yet deployed on backend
+      const statsRes = await API.get('/admin/stats');
+      const stats = statsRes.data?.data || statsRes.data || {};
+      const fallbackCards = stats.cards || {
+        totalApplications: stats.total || 0,
+        pendingVerification: stats.pending || 0,
+        applicationsUnderReview: stats.underReview || 0,
+        verifiedApplications: stats.verified || 0,
+        returnedForCorrection: stats.returnedForCorrection || 0,
+        rejectedApplications: stats.rejected || 0,
+        finalApprovedApplications: stats.finalApproved || (stats.approved || 0) + (stats.disbursed || 0),
+      };
+      return {
+        ...statsRes,
+        data: {
+          success: true,
+          message: 'Verification dashboard stats retrieved via stats fallback.',
+          data: {
+            cards: fallbackCards,
+            stageCounts: stats.stageCounts || {},
+            rawCounts: stats.rawCounts || stats,
+          },
+        },
+      };
+    }
+    throw error;
+  }
+};
 
 export const getStageApplications = (stage, params) =>
   API.get(`/admin/verifications/stage/${stage}`, { params });
