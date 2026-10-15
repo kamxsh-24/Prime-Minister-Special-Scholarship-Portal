@@ -52,6 +52,8 @@ const VerificationTable = ({
   stageTitle,
   applications = [],
   loading = false,
+  error = null,
+  onRetry = null,
   pagination = { total: 0, page: 1, totalPages: 1 },
   filters = {},
   onFilterChange,
@@ -111,16 +113,37 @@ const VerificationTable = ({
       <div className="bg-white dark:bg-[#07111C] border border-slate-200 dark:border-[#132235] rounded-2xl shadow-xs overflow-hidden">
         {loading ? (
           <SkeletonTable rows={8} />
+        ) : error ? (
+          <div className="text-center py-16 px-4">
+            <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
+              Failed to Load {stageTitle}
+            </h4>
+            <p className="text-xs text-red-600 dark:text-red-400 max-w-md mx-auto mb-4 leading-relaxed font-medium">
+              {error}
+            </p>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs inline-flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Retry Fetching
+              </button>
+            )}
+          </div>
         ) : applications.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="h-12 w-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
               <Search className="h-6 w-6" />
             </div>
             <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
-              No applications found
+              No applications in {stageTitle} queue
             </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              There are no student applications currently matching the selected criteria for {stageTitle}.
+              There are no student applications currently awaiting review matching the selected filter criteria for {stageTitle}.
             </p>
           </div>
         ) : (

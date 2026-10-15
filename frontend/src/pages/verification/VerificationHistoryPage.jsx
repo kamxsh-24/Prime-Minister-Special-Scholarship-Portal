@@ -22,6 +22,7 @@ const VerificationHistoryPage = () => {
 
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const [filters, setFilters] = useState({
@@ -35,6 +36,7 @@ const VerificationHistoryPage = () => {
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await getAllVerificationHistory({
         page: filters.page,
@@ -45,11 +47,15 @@ const VerificationHistoryPage = () => {
         dateFrom: filters.dateFrom,
         dateTo: filters.dateTo,
       });
-      const data = res.data.data;
-      setLogs(data.logs || []);
-      setPagination(data.pagination || { total: 0, page: 1, totalPages: 1 });
+      const data = res.data?.data || res.data || {};
+      const logList = Array.isArray(data.logs) ? data.logs : (Array.isArray(data) ? data : []);
+      setLogs(logList);
+      setPagination(data.pagination || { total: logList.length, page: filters.page, totalPages: Math.ceil(logList.length / 15) || 1 });
     } catch (err) {
-      dispatch(showError('Failed to fetch verification audit history.'));
+      console.error('Failed to fetch verification audit history:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to fetch verification audit history.';
+      setError(msg);
+      dispatch(showError(msg));
     } finally {
       setLoading(false);
     }
@@ -150,6 +156,24 @@ const VerificationHistoryPage = () => {
         <div className="bg-white dark:bg-[#07111C] border border-slate-200 dark:border-[#132235] rounded-2xl shadow-xs overflow-hidden">
           {loading ? (
             <SkeletonTable rows={10} />
+          ) : error ? (
+            <div className="text-center py-16 px-4">
+              <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-3">
+                <Filter className="h-6 w-6" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
+                Failed to Load Audit History
+              </h4>
+              <p className="text-xs text-red-600 dark:text-red-400 max-w-md mx-auto mb-4 font-medium">
+                {error}
+              </p>
+              <button
+                onClick={fetchLogs}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+              >
+                Retry Fetching
+              </button>
+            </div>
           ) : logs.length === 0 ? (
             <div className="text-center py-16 px-4">
               <History className="h-10 w-10 text-slate-300 mx-auto mb-2" />

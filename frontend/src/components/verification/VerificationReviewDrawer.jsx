@@ -45,6 +45,7 @@ const VerificationReviewDrawer = ({
 
   const [detailData, setDetailData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Active sub-tab in drawer: 'review', 'documents', 'applicant', 'history'
@@ -73,9 +74,10 @@ const VerificationReviewDrawer = ({
   const fetchDetails = async () => {
     if (!applicationId) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await getVerificationDetail(applicationId);
-      const data = res.data.data;
+      const data = res.data?.data || res.data || {};
       setDetailData(data);
 
       // Pre-fill existing stage checklist if available
@@ -86,7 +88,10 @@ const VerificationReviewDrawer = ({
         setOfficerRecommendation(data.application.verificationStages.officer.recommendation);
       }
     } catch (err) {
-      dispatch(showError('Failed to load application verification details.'));
+      console.error('Failed to load application verification details:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to load application verification details.';
+      setError(msg);
+      dispatch(showError(msg));
     } finally {
       setLoading(false);
     }
@@ -394,6 +399,25 @@ const VerificationReviewDrawer = ({
             <div className="flex flex-col items-center justify-center py-24 gap-3 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <p className="text-xs font-semibold">Loading verification details...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="h-12 w-12 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-3">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
+                Failed to Load Application Details
+              </h4>
+              <p className="text-xs text-red-600 dark:text-red-400 max-w-sm mb-4">
+                {error}
+              </p>
+              <button
+                onClick={fetchDetails}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs inline-flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Retry Loading
+              </button>
             </div>
           ) : (
             <>

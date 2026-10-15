@@ -33,19 +33,29 @@ const AdminDashboard = () => {
   const [recent, setRecent] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadData = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const [dashRes, appsRes, logsRes] = await Promise.all([
         getVerificationDashboard(),
         getAllApplications({ limit: 6, page: 1 }),
         getAuditLogs(),
       ]);
-      setDashboardData(dashRes.data.data);
-      setRecent(appsRes.data.data.applications);
-      setLogs(logsRes.data.data);
+      const dashData = dashRes.data?.data || dashRes.data || {};
+      const appsData = appsRes.data?.data || appsRes.data || {};
+      const logsData = logsRes.data?.data || logsRes.data || [];
+
+      setDashboardData(dashData);
+      setRecent(Array.isArray(appsData.applications) ? appsData.applications : (Array.isArray(appsData) ? appsData : []));
+      setLogs(Array.isArray(logsData) ? logsData : (Array.isArray(logsData.logs) ? logsData.logs : []));
     } catch (err) {
-      dispatch(showError('Failed to load admin dashboard data.'));
+      console.error('Failed to load admin dashboard data:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to load admin dashboard data.';
+      setError(msg);
+      dispatch(showError(msg));
     } finally {
       setLoading(false);
     }
@@ -207,6 +217,30 @@ const AdminDashboard = () => {
           </Link>
         </div>
       </div>
+
+      {/* Error Alert Banner */}
+      {error && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <div>
+              <h4 className="text-xs font-bold text-red-900 dark:text-red-300">
+                Dashboard Data Retrieval Issue
+              </h4>
+              <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">
+                {error}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={loadData}
+            className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 self-end sm:self-auto shadow-xs"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Retry Connection
+          </button>
+        </div>
+      )}
 
       {/* Summary Cards */}
       {loading ? (

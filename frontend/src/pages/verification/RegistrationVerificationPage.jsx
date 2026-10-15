@@ -12,6 +12,7 @@ const RegistrationVerificationPage = () => {
 
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({ total: 0, page: 1, totalPages: 1 });
 
   const [filters, setFilters] = useState({
@@ -27,6 +28,7 @@ const RegistrationVerificationPage = () => {
 
   const fetchApps = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await getStageApplications('registration', {
         page: filters.page,
@@ -36,11 +38,15 @@ const RegistrationVerificationPage = () => {
         category: filters.category,
         institution: filters.institution,
       });
-      const data = res.data.data;
-      setApplications(data.applications || []);
-      setPagination(data.pagination || { total: 0, page: 1, totalPages: 1 });
+      const data = res.data?.data || res.data || {};
+      const appList = Array.isArray(data.applications) ? data.applications : (Array.isArray(data) ? data : []);
+      setApplications(appList);
+      setPagination(data.pagination || { total: appList.length, page: filters.page, totalPages: Math.ceil(appList.length / 10) || 1 });
     } catch (err) {
-      dispatch(showError('Failed to fetch applications for registration verification.'));
+      console.error('Failed to fetch registration verification applications:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to fetch applications for registration verification.';
+      setError(msg);
+      dispatch(showError(msg));
     } finally {
       setLoading(false);
     }
@@ -166,6 +172,8 @@ const RegistrationVerificationPage = () => {
           stageTitle="Registration Verification"
           applications={applications}
           loading={loading}
+          error={error}
+          onRetry={fetchApps}
           pagination={pagination}
           filters={filters}
           onFilterChange={handleFilterChange}

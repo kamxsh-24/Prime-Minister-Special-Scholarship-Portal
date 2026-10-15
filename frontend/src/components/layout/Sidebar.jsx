@@ -46,11 +46,12 @@ const Sidebar = ({ isOpen, onToggle }) => {
     if (user?.role === 'admin' || user?.role === 'verification_officer' || user?.role === 'institution_officer') {
       getVerificationDashboard()
         .then((res) => {
-          if (res.data?.success) {
-            setStageCounts(res.data.data?.stageCounts || {});
-          }
+          const counts = res.data?.data?.stageCounts || res.data?.stageCounts || {};
+          setStageCounts(counts);
         })
-        .catch(() => {});
+        .catch((err) => {
+          console.warn('Could not load verification badge counts:', err.message);
+        });
 
       API.get('/notifications')
         .then((res) => {
