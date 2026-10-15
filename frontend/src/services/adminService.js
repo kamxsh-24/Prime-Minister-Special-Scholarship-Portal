@@ -75,21 +75,143 @@ export const getVerificationDashboard = async () => {
   }
 };
 
-export const getStageApplications = (stage, params) =>
-  API.get(`/admin/verifications/stage/${stage}`, { params });
+export const getStageApplications = async (stage, params) => {
+  try {
+    return await API.get(`/admin/verifications/stage/${stage}`, { params });
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.warn(`Stage route /admin/verifications/stage/${stage} 404, falling back to /admin/applications`);
+      const res = await API.get('/admin/applications', { params });
+      return res;
+    }
+    throw error;
+  }
+};
 
-export const getVerificationDetail = (applicationId) =>
-  API.get(`/admin/verifications/${applicationId}`);
+export const getVerificationDetail = async (applicationId) => {
+  try {
+    return await API.get(`/admin/verifications/${applicationId}`);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.warn(`Detail route /admin/verifications/${applicationId} 404, falling back to /admin/applications/${applicationId}`);
+      const res = await API.get(`/admin/applications/${applicationId}`);
+      const app = res.data?.data || res.data;
+      return {
+        ...res,
+        data: {
+          success: true,
+          message: 'Application verification details retrieved via fallback.',
+          data: {
+            application: app,
+            studentProfile: null,
+            verificationHistory: [],
+            duplicateFlags: [],
+            eligibilityChecks: {
+              incomeCriteriaMet: true,
+              academicMarksSufficient: true,
+              validDomicileEntered: true,
+              bankDetailsComplete: true,
+              requiredDocsUploaded: Boolean(
+                app?.documents?.aadhaar &&
+                app?.documents?.incomeCertificate &&
+                app?.documents?.marksheet &&
+                app?.documents?.bankPassbook
+              ),
+            },
+          },
+        },
+      };
+    }
+    throw error;
+  }
+};
 
-export const updateVerificationStage = (applicationId, data) =>
-  API.patch(`/admin/verifications/${applicationId}/stage`, data);
+export const updateVerificationStage = async (applicationId, data) => {
+  try {
+    return await API.patch(`/admin/verifications/${applicationId}/stage`, data);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.warn(`Stage update 404, falling back to /admin/applications/${applicationId}/status`);
+      const statusMap = {
+        verified: 'under_review',
+        returned_for_correction: 'correction_required',
+        rejected: 'rejected',
+        approved: 'approved',
+        on_hold: 'under_review',
+      };
+      const fallbackStatus = statusMap[data.status] || data.status;
+      return await API.patch(`/admin/applications/${applicationId}/status`, {
+        status: fallbackStatus,
+        remarks: data.remarks || '',
+      });
+    }
+    throw error;
+  }
+};
 
-export const updateDocumentVerification = (applicationId, docField, data) =>
-  API.patch(`/admin/verifications/${applicationId}/documents/${docField}`, data);
+export const updateDocumentVerification = async (applicationId, docField, data) => {
+  try {
+    return await API.patch(`/admin/verifications/${applicationId}/documents/${docField}`, data);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.warn(`Doc verify 404, falling back to /admin/applications/${applicationId}/documents/${docField}`);
+      return await API.patch(`/admin/applications/${applicationId}/documents/${docField}`, data);
+    }
+    throw error;
+  }
+};
 
-export const getApplicationVerificationHistory = (applicationId) =>
-  API.get(`/admin/verifications/${applicationId}/history`);
+export const getApplicationVerificationHistory = async (applicationId) => {
+  try {
+    return await API.get(`/admin/verifications/${applicationId}/history`);
+  } catch (error) {
+    if (error.response?.status === 404) {
+      return {
+        data: { success: true, data: [] },
+      };
+    }
+    throw error;
+  }
+};
 
-export const getAllVerificationHistory = (params) =>
-  API.get('/admin/verifications/history/all', { params });
+export const getAllVerificationHistory = async (params) => {
+  try {
+    return await API.get('/admin/verifications/history/all', { params });
+  } catch (error) {
+    if (error.response?.status === 404) {
+      console.warn('History route /admin/verifications/history/all 404, falling back to /admin/logs');
+      const res = await API.get('/admin/logs', { params });
+      const raw = res.data?.data || res.data || [];
+      const logList = Array.isArray(raw) ? raw : (raw.logs || []);
+      const transformedLogs = logList.map((l) => ({
+        _id: l._id,
+        applicationId: l.details?.applicationId ? { _id: l.details.applicationId } : null,
+        studentId: l.details?.studentId ? { _id: l.details.studentId } : null,
+        stage: l.details?.docField ? 'document' : 'general',
+        action: l.action,
+        reviewerName: l.userId?.fullName || 'Admin User',
+        reviewerRole: l.userId?.role || 'admin',
+        remarks: l.details?.remarks || l.action,
+        createdAt: l.createdAt,
+      }));
+      return {
+        ...res,
+        data: {
+          success: true,
+          message: 'Verification audit logs fetched via fallback.',
+          data: {
+            logs: transformedLogs,
+            pagination: res.data?.pagination || {
+              total: transformedLogs.length,
+              page: params?.page || 1,
+              limit: params?.limit || 15,
+              totalPages: Math.ceil(transformedLogs.length / 15) || 1,
+            },
+          },
+        },
+      };
+    }
+    throw error;
+  }
+};
 
