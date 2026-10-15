@@ -39,3 +39,26 @@ export const updateDocumentStatus = (applicationId, docField, data) =>
 
 export const getAnalyticsDashboard = (params) =>
   API.get('/admin/analytics/dashboard', { params });
+
+// Dedicated Verification Module APIs
+export const getVerificationDashboard = () =>
+  API.get('/admin/verifications/dashboard');
+
+export const getStageApplications = (stage, params) =>
+  API.get(`/admin/verifications/stage/${stage}`, { params });
+
+export const getVerificationDetail = (applicationId) =>
+  API.get(`/admin/verifications/${applicationId}`);
+
+export const updateVerificationStage = (applicationId, data) =>
+  API.patch(`/admin/verifications/${applicationId}/stage`, data);
+
+export const updateDocumentVerification = (applicationId, docField, data) =>
+  API.patch(`/admin/verifications/${applicationId}/documents/${docField}`, data);
+
+export const getApplicationVerificationHistory = (applicationId) =>
+  API.get(`/admin/verifications/${applicationId}/history`);
+
+export const getAllVerificationHistory = (params) =>
+  API.get('/admin/verifications/history/all', { params });
+

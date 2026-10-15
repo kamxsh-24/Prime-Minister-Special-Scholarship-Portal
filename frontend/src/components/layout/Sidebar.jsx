@@ -1,32 +1,33 @@
-import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
+  UserCheck,
   User,
   FileText,
-  Activity,
+  Building,
+  ShieldCheck,
+  Sparkles,
+  History,
+  Bell,
   LogOut,
   GraduationCap,
   Users,
   BarChart2,
+  Activity,
+  Layers
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import { useTheme } from '../../context/ThemeContext';
+import { getVerificationDashboard } from '../../services/adminService';
+import API from '../../services/api';
 
 const StudentLinks = [
   { to: '/dashboard',             icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/dashboard/profile',     icon: User,            label: 'My Profile' },
   { to: '/dashboard/application', icon: FileText,        label: 'My Application' },
   { to: '/dashboard/status',      icon: Activity,        label: 'Track Status' },
-];
-
-const AdminLinks = [
-  { to: '/admin',              icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/applications', icon: FileText,        label: 'Applications' },
-  { to: '/admin/profiles',     icon: Users,           label: 'Profiles' },
-  { to: '/admin/reports',      icon: BarChart2,       label: 'Reports' },
-  { to: '/admin/users',        icon: Users,           label: 'Users' },
 ];
 
 const Sidebar = ({ isOpen, onToggle }) => {
@@ -36,10 +37,54 @@ const Sidebar = ({ isOpen, onToggle }) => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [stageCounts, setStageCounts] = useState({});
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (user?.role === 'admin' || user?.role === 'verification_officer' || user?.role === 'institution_officer') {
+      getVerificationDashboard()
+        .then((res) => {
+          if (res.data?.success) {
+            setStageCounts(res.data.data?.stageCounts || {});
+          }
+        })
+        .catch(() => {});
+
+      API.get('/notifications')
+        .then((res) => {
+          if (res.data?.success) {
+            const list = res.data.data || [];
+            setUnreadNotifications(list.filter((n) => !n.isRead).length);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user, location.pathname]);
 
   if (!user) return null;
 
-  const links = user.role === 'admin' ? AdminLinks : StudentLinks;
+  // The 9 Required Admin Navigation Items with dynamic pending badges
+  const AdminVerificationLinks = [
+    { to: '/admin',                            icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/admin/verifications/registration', icon: UserCheck,       label: 'Registration Verification', badge: stageCounts.registration },
+    { to: '/admin/verifications/profile',      icon: User,            label: 'Profile Verification',      badge: stageCounts.profile },
+    { to: '/admin/verifications/documents',    icon: FileText,        label: 'Document Verification',     badge: stageCounts.document },
+    { to: '/admin/verifications/institute',    icon: Building,        label: 'Institute Verification',    badge: stageCounts.institute },
+    { to: '/admin/verifications/officer',      icon: ShieldCheck,     label: 'Officer Verification',      badge: stageCounts.officer },
+    { to: '/admin/verifications/final',        icon: Sparkles,        label: 'Final Decisions',           badge: stageCounts.finalDecision },
+    { to: '/admin/verifications/history',      icon: History,         label: 'Verification History' },
+    { to: '/admin/notifications',              icon: Bell,            label: 'Notifications',             badge: unreadNotifications },
+  ];
+
+  // Secondary platform management links for existing routes
+  const SecondaryAdminLinks = [
+    { to: '/admin/applications', icon: Layers,    label: 'All Applications' },
+    { to: '/admin/profiles',     icon: Users,     label: 'Student Profiles' },
+    { to: '/admin/reports',      icon: BarChart2, label: 'Analytics Reports' },
+    { to: '/admin/users',        icon: Users,     label: 'User Accounts' },
+  ];
 
   const handleLogout = () => {
     dispatch(logout());
@@ -75,50 +120,114 @@ const Sidebar = ({ isOpen, onToggle }) => {
               PMSSS
             </span>
             <span className="text-[10.5px] text-[#64748B] dark:text-[#94A3B8] font-medium leading-tight truncate">
-              Scholarship Management Portal
+              {user.role === 'admin' ? 'Admin Verification Portal' : 'Scholarship Portal'}
             </span>
           </div>
         </div>
 
-        {/* 4 Main Navigation Items */}
+        {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-            Navigation
-          </div>
-          {links.map(({ to, icon: Icon, label, badge }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/admin' || to === '/dashboard'}
-              onClick={() => {
-                if (isOpen) onToggle();
-              }}
-              className={({ isActive }) =>
-                `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 relative overflow-hidden ${
-                  isActive
-                    ? 'bg-[#EBF3FE] dark:bg-[#1769FF] text-[#1769FF] dark:text-white font-semibold shadow-xs'
-                    : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-gray-100/70 dark:hover:bg-[#07111C] hover:text-[#1769FF] dark:hover:text-white'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-[#1769FF] dark:bg-white rounded-r-full" />
+          {user.role === 'admin' ? (
+            <>
+              <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+                Verification Modules
+              </div>
+              {AdminVerificationLinks.map(({ to, icon: Icon, label, badge }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/admin'}
+                  onClick={() => {
+                    if (isOpen) onToggle();
+                  }}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 relative overflow-hidden ${
+                      isActive
+                        ? 'bg-[#EBF3FE] dark:bg-[#1769FF] text-[#1769FF] dark:text-white font-semibold shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-gray-100/70 dark:hover:bg-[#07111C] hover:text-[#1769FF] dark:hover:text-white'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 bg-[#1769FF] dark:bg-white rounded-r-full" />
+                      )}
+                      <div className="flex items-center gap-2.5 pl-1 min-w-0">
+                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{label}</span>
+                      </div>
+                      {badge !== undefined && badge !== null && badge > 0 && (
+                        <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full flex-shrink-0 ml-1">
+                          {badge}
+                        </span>
+                      )}
+                    </>
                   )}
-                  <div className="flex items-center gap-3 pl-1">
-                    <Icon className="h-4 w-4 flex-shrink-0" />
+                </NavLink>
+              ))}
+
+              <div className="pt-3 px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+                Portal Management
+              </div>
+              {SecondaryAdminLinks.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => {
+                    if (isOpen) onToggle();
+                  }}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 relative overflow-hidden ${
+                      isActive
+                        ? 'bg-[#EBF3FE] dark:bg-[#1769FF] text-[#1769FF] dark:text-white font-semibold shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-gray-100/70 dark:hover:bg-[#07111C] hover:text-[#1769FF] dark:hover:text-white'
+                    }`
+                  }
+                >
+                  <div className="flex items-center gap-2.5 pl-1 min-w-0">
+                    <Icon className="h-4 w-4 flex-shrink-0 opacity-70" />
                     <span className="truncate">{label}</span>
                   </div>
-                  {badge && (
-                    <span className="bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
-                      {badge}
-                    </span>
+                </NavLink>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
+                Navigation
+              </div>
+              {StudentLinks.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/dashboard'}
+                  onClick={() => {
+                    if (isOpen) onToggle();
+                  }}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-150 relative overflow-hidden ${
+                      isActive
+                        ? 'bg-[#EBF3FE] dark:bg-[#1769FF] text-[#1769FF] dark:text-white font-semibold shadow-xs'
+                        : 'text-[#64748B] dark:text-[#94A3B8] hover:bg-gray-100/70 dark:hover:bg-[#07111C] hover:text-[#1769FF] dark:hover:text-white'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-[#1769FF] dark:bg-white rounded-r-full" />
+                      )}
+                      <div className="flex items-center gap-3 pl-1">
+                        <Icon className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{label}</span>
+                      </div>
+                    </>
                   )}
-                </>
-              )}
-            </NavLink>
-          ))}
+                </NavLink>
+              ))}
+            </>
+          )}
         </nav>
 
         {/* Sidebar Bottom Section */}

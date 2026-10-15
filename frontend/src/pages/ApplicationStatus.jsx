@@ -24,8 +24,9 @@ import {
 const TIMELINE = [
   { status: 'draft',                 label: 'Registration & Application', desc: 'Complete and save all required application sections.' },
   { status: 'submitted',            label: 'Application Submission',     desc: 'Your application has been successfully submitted.' },
+  { status: 'under_verification',   label: 'Verification Stage',         desc: 'Your application is undergoing systematic registration, profile, and document verification.' },
   { status: 'institution_verified',  label: 'Institute Verification',     desc: 'Your college or institution nodal officer has verified your registration details.' },
-  { status: 'under_review',          label: 'Officer Verification',       desc: 'State and nodal scholarship officers are reviewing your documents.' },
+  { status: 'under_review',          label: 'Officer Verification',       desc: 'State and nodal scholarship officers are reviewing your eligibility.' },
   { status: 'approved',              label: 'Final Decision & Approval',  desc: 'Congratulations! Your scholarship application has been officially approved.' },
   { status: 'disbursed',             label: 'Fund Disbursement',          desc: 'Scholarship funds have been disbursed to your Aadhaar-seeded bank account.' },
 ];
@@ -79,13 +80,16 @@ const ApplicationStatus = () => {
 
   const getStepIndex = (status) => {
     if (!status || status === 'draft') return 0;
+    if (status === 'correction_required' || status === 'on_hold') return 1;
     const idx = TIMELINE.findIndex((t) => t.status === status);
-    return idx === -1 ? 0 : idx;
+    return idx === -1 ? 1 : idx;
   };
 
   const currentIdx = application ? getStepIndex(application.status) : 0;
   const isDraft = !application || application?.status === 'draft';
   const isRejected = application?.status === 'rejected';
+  const isCorrection = application?.status === 'correction_required';
+  const isOnHold = application?.status === 'on_hold';
   const isApproved = application?.status === 'approved' || application?.status === 'disbursed';
 
   return (
@@ -205,12 +209,52 @@ const ApplicationStatus = () => {
                 <div className="mt-5 p-4 bg-red-50 dark:bg-[#121212] border border-red-200 dark:border-[#EF5350]/30 rounded-2xl flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-[#EF5350] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-red-900 dark:text-[#EF5350] text-sm">Application Needs Revision / Disapproved</p>
+                    <p className="font-bold text-red-900 dark:text-[#EF5350] text-sm">Application Rejected</p>
                     {application.reviewerRemarks && (
                       <p className="text-xs text-red-700 dark:text-[#E0E0E0] mt-1 font-medium">{application.reviewerRemarks}</p>
                     )}
                     <p className="text-xs text-gray-500 dark:text-[#BDBDBD] mt-2">
                       Need help? Contact support at <a href="mailto:help@pmsss.gov.in" className="text-blue-600 dark:text-[#4FC3F7] underline">help@pmsss.gov.in</a>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isCorrection && (
+                <div className="mt-5 p-4 bg-amber-50 dark:bg-[#1E170C] border border-amber-300 dark:border-amber-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-amber-900 dark:text-amber-300 text-sm">Correction / Re-upload Required</p>
+                      {application.reviewerRemarks && (
+                        <p className="text-xs text-amber-800 dark:text-amber-400 mt-1 font-medium leading-relaxed">
+                          Reviewer Note: {application.reviewerRemarks}
+                        </p>
+                      )}
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Please update your required documents or profile details and resubmit.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    to="/dashboard/application"
+                    className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 shrink-0"
+                  >
+                    Update Application <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              {isOnHold && (
+                <div className="mt-5 p-4 bg-purple-50 dark:bg-[#1A1224] border border-purple-200 dark:border-purple-800/40 rounded-2xl flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-purple-900 dark:text-purple-300 text-sm">Application Placed On Hold</p>
+                    {application.reviewerRemarks && (
+                      <p className="text-xs text-purple-800 dark:text-purple-300 mt-1 font-medium">{application.reviewerRemarks}</p>
+                    )}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Your application has been held for administrative verification or allocation clarification. No immediate action required.
                     </p>
                   </div>
                 </div>

@@ -31,6 +31,16 @@ import AdminUserManagement from './pages/AdminUserManagement';
 import AdminProfilesList from './pages/AdminProfilesList';
 import AdminProfileDetail from './pages/AdminProfileDetail';
 
+// Verification Module Pages
+import RegistrationVerificationPage from './pages/verification/RegistrationVerificationPage';
+import ProfileVerificationPage from './pages/verification/ProfileVerificationPage';
+import DocumentVerificationPage from './pages/verification/DocumentVerificationPage';
+import InstituteVerificationPage from './pages/verification/InstituteVerificationPage';
+import OfficerVerificationPage from './pages/verification/OfficerVerificationPage';
+import FinalDecisionPage from './pages/verification/FinalDecisionPage';
+import VerificationHistoryPage from './pages/verification/VerificationHistoryPage';
+import AdminNotificationsPage from './pages/verification/AdminNotificationsPage';
+
 // Institution Pages
 import InstitutionDashboard from './pages/InstitutionDashboard';
 
@@ -162,6 +172,72 @@ const App = () => {
                 element={
                   <ProtectedRoute allowedRoles="admin">
                     <AdminProfileDetail />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Dedicated Verification Modules */}
+              <Route
+                path="/admin/verifications/registration"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <RegistrationVerificationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/profile"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <ProfileVerificationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/documents"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <DocumentVerificationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/institute"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'institution_officer', 'verification_officer']}>
+                    <InstituteVerificationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/officer"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <OfficerVerificationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/final"
+                element={
+                  <ProtectedRoute allowedRoles="admin">
+                    <FinalDecisionPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/verifications/history"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <VerificationHistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/notifications"
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'verification_officer']}>
+                    <AdminNotificationsPage />
                   </ProtectedRoute>
                 }
               />
